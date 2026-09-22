@@ -1,45 +1,34 @@
-# CircleUp — Social Habit Tracker
+# highlife — Social Habit Tracker
 
-A responsive front-end prototype for tracking multiple social interactions per day.
+A visual social-habit tracker where every meaningful interaction becomes a highlighter stroke.
 
-## Current prototype features
+## Improvements in this version
 
-- Register / log in with email + password.
-- Circular current-month tracker.
-- **Four interaction slots per day** instead of one daily checkbox.
-- Each new interaction fills one slot with an **animated highlighter swipe**.
-- Interaction categories:
-  - Social
-  - Professional
-  - New person
-  - Event
-- Optional short note for each interaction.
-- Monthly totals, social-day count, streak and recent interactions.
-- Existing data from the first version is kept compatible: an older one-interaction day becomes the first slot for that day.
-- Data is stored locally in the browser with `localStorage`.
+- Rebranded from CircleUp to **highlife**.
+- Four interaction slots per day.
+- Organic highlighter-style strokes instead of progress bars.
+- Different highlighter colors for Social, New person, Professional and Event.
+- Animated left-to-right marker sweep when an interaction is added.
+- Small `+1 highlighted` feedback animation.
+- Today's day is subtly enlarged and highlighted.
+- Cleaner day cards with less border/shadow.
+- The center now shows today's progress (`0/4`) and the monthly interaction count.
+- Simplified monthly snapshot with three primary metrics and two compact metrics.
+- Dynamic daily social challenge.
+- English month/date formatting for visual consistency.
+- Existing demo data is preserved because the original localStorage keys are retained.
 
-## Change the number of daily slots
+## Files
 
-Open `app.js` and change:
+- `index.html`
+- `styles.css`
+- `app.js`
+- `README.md`
 
-```js
-const MAX_INTERACTIONS_PER_DAY = 4;
-```
+## Update your existing Vercel site
 
-For example, use `5` for five interaction slots per day.
+Upload/replace `index.html`, `styles.css`, and `app.js` in your existing GitHub repository and commit the changes. Vercel will redeploy automatically while keeping the same project URL.
 
-## Important: demo authentication
+## Demo authentication note
 
-This prototype stores passwords locally in plain text **only so the project can run without a backend**.
-Do not use this mechanism for a real public site.
-
-For the real project, connect authentication and data storage to Supabase, Firebase or another secure backend.
-
-## Updating the live Vercel website
-
-If this project is connected to GitHub and Vercel:
-
-1. Replace `index.html`, `styles.css`, `app.js` and `README.md` in the same GitHub repository.
-2. Commit the changes to the branch connected to Vercel.
-3. Vercel will automatically redeploy the same project.
-4. Your existing `.vercel.app` domain stays the same.
+The current prototype stores login credentials and interaction data in the browser using `localStorage`. This is suitable for a classroom prototype, not for a real public authentication system. Use a real backend/authentication provider before collecting actual user accounts.

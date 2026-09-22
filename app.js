@@ -1,3 +1,4 @@
+// Keep the original storage keys so existing CircleUp demo data remains available after rebranding to highlife.
 const STORAGE_USERS = "circleup_users_v1";
 const STORAGE_SESSION = "circleup_session_v1";
 const STORAGE_DATA = "circleup_data_v1";
@@ -11,7 +12,6 @@ const state = {
 };
 
 const $ = (id) => document.getElementById(id);
-
 const authView = $("authView");
 const dashboardView = $("dashboardView");
 const authForm = $("authForm");
@@ -24,15 +24,17 @@ const tabs = document.querySelectorAll(".auth-tab");
 const dayRing = $("dayRing");
 const monthTitle = $("monthTitle");
 const userEmail = $("userEmail");
-const socialDaysBig = $("socialDaysBig");
-const daysInMonthLabel = $("daysInMonthLabel");
+const todayCount = $("todayCount");
+const monthInteractionLabel = $("monthInteractionLabel");
 const checkInBtn = $("checkInBtn");
+const interactionToast = $("interactionToast");
 const statInteractions = $("statInteractions");
 const statSocialDays = $("statSocialDays");
 const statStreak = $("statStreak");
 const statNewPeople = $("statNewPeople");
 const statProfessional = $("statProfessional");
 const recentList = $("recentList");
+const dailyChallenge = $("dailyChallenge");
 const logoutBtn = $("logoutBtn");
 
 const modal = $("checkInModal");
@@ -40,23 +42,45 @@ const checkInForm = $("checkInForm");
 const note = $("note");
 const charCount = $("charCount");
 const todayCapacity = $("todayCapacity");
-const saveInteractionBtn = $("saveInteractionBtn");
+
+const CATEGORY_LABELS = {
+  social: "Social",
+  professional: "Professional",
+  "new-person": "New person",
+  event: "Event"
+};
+
+const CATEGORY_SHORT = {
+  social: "S",
+  professional: "P",
+  "new-person": "N",
+  event: "E"
+};
+
+const CATEGORY_COLORS = {
+  social: "var(--social)",
+  professional: "var(--professional)",
+  "new-person": "var(--new-person)",
+  event: "var(--event)"
+};
+
+const CHALLENGES = [
+  "Start one conversation today that you would not have started otherwise.",
+  "Introduce yourself to one person you have seen before but never spoken to.",
+  "Send a message to someone you have been meaning to reconnect with.",
+  "Ask one person a question about what they study, build or work on.",
+  "Invite someone to grab a coffee, lunch or a short walk.",
+  "At your next group setting, speak to someone outside your usual circle.",
+  "Turn one small-talk moment into a real conversation by asking a follow-up question."
+];
 
 function getJSON(key, fallback) {
-  try {
-    return JSON.parse(localStorage.getItem(key)) ?? fallback;
-  } catch {
-    return fallback;
-  }
+  try { return JSON.parse(localStorage.getItem(key)) ?? fallback; }
+  catch { return fallback; }
 }
 
-function setJSON(key, value) {
-  localStorage.setItem(key, JSON.stringify(value));
-}
-
-function normalizeEmail(value) {
-  return value.trim().toLowerCase();
-}
+function setJSON(key, value) { localStorage.setItem(key, JSON.stringify(value)); }
+function normalizeEmail(value) { return value.trim().toLowerCase(); }
 
 function setAuthMode(mode) {
   state.authMode = mode;
@@ -69,7 +93,6 @@ tabs.forEach(tab => tab.addEventListener("click", () => setAuthMode(tab.dataset.
 
 authForm.addEventListener("submit", (event) => {
   event.preventDefault();
-
   const email = normalizeEmail(emailInput.value);
   const password = passwordInput.value;
 
@@ -79,14 +102,12 @@ authForm.addEventListener("submit", (event) => {
   }
 
   const users = getJSON(STORAGE_USERS, {});
-
   if (state.authMode === "register") {
     if (users[email]) {
       authMessage.textContent = "An account with this email already exists. Try logging in.";
       return;
     }
-
-    // DEMO ONLY. Replace localStorage authentication with Supabase/Firebase before public production use.
+    // DEMO ONLY. Use a real authentication service before using this publicly for real accounts.
     users[email] = { password, createdAt: new Date().toISOString() };
     setJSON(STORAGE_USERS, users);
     setJSON(STORAGE_SESSION, { email });
@@ -96,7 +117,6 @@ authForm.addEventListener("submit", (event) => {
       authMessage.textContent = "Incorrect email or password.";
       return;
     }
-
     setJSON(STORAGE_SESSION, { email });
     openDashboard(email);
   }
@@ -132,7 +152,6 @@ function saveUserData(data) {
 function normalizeDayEntries(rawEntry) {
   if (!rawEntry) return [];
   if (Array.isArray(rawEntry)) return rawEntry;
-  // Backward compatibility with the first version, where one day stored one object.
   if (typeof rawEntry === "object") return [rawEntry];
   return [];
 }
@@ -144,19 +163,13 @@ function keyForDate(date) {
   return `${y}-${m}-${d}`;
 }
 
-function monthKey(date) {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
-}
-
-function daysInMonth(date) {
-  return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
-}
+function monthKey(date) { return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`; }
+function daysInMonth(date) { return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate(); }
 
 function currentMonthDaysWithEntries() {
   const now = new Date();
   const prefix = monthKey(now);
   const data = getUserData();
-
   return Object.entries(data)
     .filter(([dateKey]) => dateKey.startsWith(prefix))
     .map(([dateKey, rawEntry]) => ({ dateKey, entries: normalizeDayEntries(rawEntry) }))
@@ -173,26 +186,27 @@ function flatCurrentMonthEntries() {
 function renderDashboard() {
   const now = new Date();
   const totalDays = daysInMonth(now);
-  const monthName = now.toLocaleDateString(undefined, { month: "long", year: "numeric" });
-
+  const monthName = now.toLocaleDateString("en-GB", { month: "long", year: "numeric" });
   monthTitle.textContent = monthName;
+  dailyChallenge.textContent = CHALLENGES[now.getDate() % CHALLENGES.length];
+
   renderRing(now, totalDays);
   renderStats(now);
   renderRecent();
 
   const todayEntries = normalizeDayEntries(getUserData()[keyForDate(now)]);
   const remaining = MAX_INTERACTIONS_PER_DAY - todayEntries.length;
+  todayCount.textContent = todayEntries.length;
+  monthInteractionLabel.textContent = `${flatCurrentMonthEntries().length} interaction${flatCurrentMonthEntries().length === 1 ? "" : "s"} this month`;
   checkInBtn.disabled = remaining <= 0;
-  checkInBtn.textContent = remaining <= 0
-    ? "Today's slots are full ✓"
-    : `Add interaction (${remaining} left)`;
+  checkInBtn.textContent = remaining <= 0 ? "Today's slots are full ✓" : `Add interaction (${remaining} left)`;
 }
 
 function renderRing(now, totalDays) {
   dayRing.innerHTML = "";
   const data = getUserData();
   const today = now.getDate();
-  const radiusPercent = window.innerWidth <= 600 ? 42.2 : 44;
+  const radiusPercent = window.innerWidth <= 650 ? 42.4 : 44.1;
 
   for (let day = 1; day <= totalDays; day++) {
     const date = new Date(now.getFullYear(), now.getMonth(), day);
@@ -227,27 +241,18 @@ function renderRing(now, totalDays) {
       const slot = document.createElement("span");
       slot.className = "interaction-slot";
       const entry = entries[slotIndex];
-
       if (entry) {
         slot.classList.add("filled", `category-${entry.category || "social"}`);
-        if (state.animateDateKey === key && state.animateSlotIndex === slotIndex) {
-          slot.classList.add("just-added");
-        }
+        if (state.animateDateKey === key && state.animateSlotIndex === slotIndex) slot.classList.add("just-added");
       }
-
       slots.appendChild(slot);
     }
 
     item.appendChild(slots);
-
-    if (day === today && entries.length < MAX_INTERACTIONS_PER_DAY) {
-      item.addEventListener("click", openModal);
-    }
-
+    if (day === today && entries.length < MAX_INTERACTIONS_PER_DAY) item.addEventListener("click", openModal);
     dayRing.appendChild(item);
   }
 
-  // Only play the highlighter animation once after adding an interaction.
   state.animateDateKey = null;
   state.animateSlotIndex = null;
 }
@@ -256,9 +261,6 @@ function renderStats(now) {
   const days = currentMonthDaysWithEntries();
   const entries = flatCurrentMonthEntries();
   const data = getUserData();
-
-  socialDaysBig.textContent = entries.length;
-  daysInMonthLabel.textContent = `across ${days.length} social day${days.length === 1 ? "" : "s"}`;
 
   statInteractions.textContent = entries.length;
   statSocialDays.textContent = days.length;
@@ -269,8 +271,7 @@ function renderStats(now) {
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   for (let cursor = new Date(today); ; cursor.setDate(cursor.getDate() - 1)) {
     if (cursor.getMonth() !== now.getMonth()) break;
-    const dayEntries = normalizeDayEntries(data[keyForDate(cursor)]);
-    if (dayEntries.length > 0) streak++;
+    if (normalizeDayEntries(data[keyForDate(cursor)]).length > 0) streak++;
     else break;
   }
   statStreak.textContent = `${streak} day${streak === 1 ? "" : "s"}`;
@@ -283,40 +284,24 @@ function renderRecent() {
     .slice(0, 6);
 
   recentList.innerHTML = "";
-
   if (!entries.length) {
     recentList.innerHTML = `<div class="recent-empty">No interactions yet. Your first highlighted moment will appear here.</div>`;
     return;
   }
 
-  const iconMap = {
-    social: "☕",
-    professional: "💼",
-    "new-person": "✨",
-    event: "🎟"
-  };
-
-  const labelMap = {
-    social: "Social",
-    professional: "Professional",
-    "new-person": "New person",
-    event: "Event"
-  };
-
   entries.forEach(entry => {
     const row = document.createElement("div");
     row.className = "recent-item";
     const d = new Date(`${entry.dateKey}T12:00:00`);
-    const shortDate = d.toLocaleDateString(undefined, { day: "numeric", month: "short" });
-
+    const shortDate = d.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+    const safeCategory = entry.category || "social";
     row.innerHTML = `
-      <div class="recent-icon">${iconMap[entry.category] || "●"}</div>
+      <div class="recent-icon" style="--item-color:${CATEGORY_COLORS[safeCategory] || CATEGORY_COLORS.social}"><span>${CATEGORY_SHORT[safeCategory] || "S"}</span></div>
       <div class="recent-copy">
-        <strong>${labelMap[entry.category] || entry.category}</strong>
+        <strong>${CATEGORY_LABELS[safeCategory] || safeCategory}</strong>
         <span>${escapeHTML(entry.note || "Meaningful interaction logged")}</span>
       </div>
-      <div class="recent-date">${shortDate}</div>
-    `;
+      <div class="recent-date">${shortDate}</div>`;
     recentList.appendChild(row);
   });
 }
@@ -350,11 +335,10 @@ function renderCapacityPreview() {
 function openModal() {
   const todayEntries = normalizeDayEntries(getUserData()[keyForDate(new Date())]);
   if (todayEntries.length >= MAX_INTERACTIONS_PER_DAY) return;
-
   renderCapacityPreview();
   modal.classList.remove("hidden");
   document.body.style.overflow = "hidden";
-  note.focus();
+  setTimeout(() => note.focus(), 40);
 }
 
 function closeModal() {
@@ -364,23 +348,20 @@ function closeModal() {
   charCount.textContent = "0";
 }
 
+function showInteractionToast(category) {
+  interactionToast.textContent = `+1 ${CATEGORY_LABELS[category] || "interaction"} highlighted`;
+  interactionToast.classList.remove("show");
+  void interactionToast.offsetWidth;
+  interactionToast.classList.add("show");
+}
+
 checkInBtn.addEventListener("click", openModal);
-
-document.querySelectorAll("[data-close-modal]").forEach(el => {
-  el.addEventListener("click", closeModal);
-});
-
-document.addEventListener("keydown", (event) => {
-  if (event.key === "Escape" && !modal.classList.contains("hidden")) closeModal();
-});
-
-note.addEventListener("input", () => {
-  charCount.textContent = note.value.length;
-});
+document.querySelectorAll("[data-close-modal]").forEach(el => el.addEventListener("click", closeModal));
+document.addEventListener("keydown", event => { if (event.key === "Escape" && !modal.classList.contains("hidden")) closeModal(); });
+note.addEventListener("input", () => { charCount.textContent = note.value.length; });
 
 checkInForm.addEventListener("submit", (event) => {
   event.preventDefault();
-
   const formData = new FormData(checkInForm);
   const category = formData.get("category");
   const today = new Date();
@@ -394,27 +375,19 @@ checkInForm.addEventListener("submit", (event) => {
     return;
   }
 
-  const newEntry = {
-    category,
-    note: note.value.trim(),
-    createdAt: new Date().toISOString()
-  };
-
-  todayEntries.push(newEntry);
+  todayEntries.push({ category, note: note.value.trim(), createdAt: new Date().toISOString() });
   data[todayKey] = todayEntries;
   saveUserData(data);
-
   state.animateDateKey = todayKey;
   state.animateSlotIndex = todayEntries.length - 1;
 
   closeModal();
   renderDashboard();
+  showInteractionToast(category);
 });
 
 window.addEventListener("resize", () => {
-  if (!dashboardView.classList.contains("hidden")) {
-    renderRing(new Date(), daysInMonth(new Date()));
-  }
+  if (!dashboardView.classList.contains("hidden")) renderRing(new Date(), daysInMonth(new Date()));
 });
 
 (function init() {
