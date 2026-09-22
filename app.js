@@ -1,11 +1,13 @@
-
 const STORAGE_USERS = "circleup_users_v1";
 const STORAGE_SESSION = "circleup_session_v1";
 const STORAGE_DATA = "circleup_data_v1";
+const MAX_INTERACTIONS_PER_DAY = 4;
 
 const state = {
   authMode: "register",
-  email: null
+  email: null,
+  animateDateKey: null,
+  animateSlotIndex: null
 };
 
 const $ = (id) => document.getElementById(id);
@@ -19,13 +21,13 @@ const emailInput = $("email");
 const passwordInput = $("password");
 const tabs = document.querySelectorAll(".auth-tab");
 
-const tracker = $("tracker");
 const dayRing = $("dayRing");
 const monthTitle = $("monthTitle");
 const userEmail = $("userEmail");
 const socialDaysBig = $("socialDaysBig");
 const daysInMonthLabel = $("daysInMonthLabel");
 const checkInBtn = $("checkInBtn");
+const statInteractions = $("statInteractions");
 const statSocialDays = $("statSocialDays");
 const statStreak = $("statStreak");
 const statNewPeople = $("statNewPeople");
@@ -37,6 +39,8 @@ const modal = $("checkInModal");
 const checkInForm = $("checkInForm");
 const note = $("note");
 const charCount = $("charCount");
+const todayCapacity = $("todayCapacity");
+const saveInteractionBtn = $("saveInteractionBtn");
 
 function getJSON(key, fallback) {
   try {
@@ -61,9 +65,7 @@ function setAuthMode(mode) {
   authMessage.textContent = "";
 }
 
-tabs.forEach(tab => {
-  tab.addEventListener("click", () => setAuthMode(tab.dataset.tab));
-});
+tabs.forEach(tab => tab.addEventListener("click", () => setAuthMode(tab.dataset.tab)));
 
 authForm.addEventListener("submit", (event) => {
   event.preventDefault();
@@ -84,9 +86,7 @@ authForm.addEventListener("submit", (event) => {
       return;
     }
 
-    // DEMO ONLY:
-    // Passwords are stored locally in plain text so the prototype works without a backend.
-    // Replace this block with Supabase/Firebase/Auth0 for a production version.
+    // DEMO ONLY. Replace localStorage authentication with Supabase/Firebase before public production use.
     users[email] = { password, createdAt: new Date().toISOString() };
     setJSON(STORAGE_USERS, users);
     setJSON(STORAGE_SESSION, { email });
@@ -129,6 +129,14 @@ function saveUserData(data) {
   setJSON(STORAGE_DATA, all);
 }
 
+function normalizeDayEntries(rawEntry) {
+  if (!rawEntry) return [];
+  if (Array.isArray(rawEntry)) return rawEntry;
+  // Backward compatibility with the first version, where one day stored one object.
+  if (typeof rawEntry === "object") return [rawEntry];
+  return [];
+}
+
 function keyForDate(date) {
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, "0");
@@ -144,15 +152,22 @@ function daysInMonth(date) {
   return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
 }
 
-function entriesForCurrentMonth() {
+function currentMonthDaysWithEntries() {
   const now = new Date();
   const prefix = monthKey(now);
   const data = getUserData();
 
   return Object.entries(data)
     .filter(([dateKey]) => dateKey.startsWith(prefix))
-    .map(([dateKey, entry]) => ({ dateKey, ...entry }))
+    .map(([dateKey, rawEntry]) => ({ dateKey, entries: normalizeDayEntries(rawEntry) }))
+    .filter(day => day.entries.length > 0)
     .sort((a, b) => a.dateKey.localeCompare(b.dateKey));
+}
+
+function flatCurrentMonthEntries() {
+  return currentMonthDaysWithEntries().flatMap(day =>
+    day.entries.map((entry, index) => ({ ...entry, dateKey: day.dateKey, slotIndex: index }))
+  );
 }
 
 function renderDashboard() {
@@ -161,98 +176,116 @@ function renderDashboard() {
   const monthName = now.toLocaleDateString(undefined, { month: "long", year: "numeric" });
 
   monthTitle.textContent = monthName;
-  daysInMonthLabel.textContent = `of ${totalDays} this month`;
-
   renderRing(now, totalDays);
   renderStats(now);
   renderRecent();
 
-  const data = getUserData();
-  const todayKey = keyForDate(now);
-  const completedToday = Boolean(data[todayKey]);
-
-  checkInBtn.disabled = completedToday;
-  checkInBtn.textContent = completedToday ? "Completed today ✓" : "Check in today";
+  const todayEntries = normalizeDayEntries(getUserData()[keyForDate(now)]);
+  const remaining = MAX_INTERACTIONS_PER_DAY - todayEntries.length;
+  checkInBtn.disabled = remaining <= 0;
+  checkInBtn.textContent = remaining <= 0
+    ? "Today's slots are full ✓"
+    : `Add interaction (${remaining} left)`;
 }
 
 function renderRing(now, totalDays) {
   dayRing.innerHTML = "";
   const data = getUserData();
   const today = now.getDate();
-
-  const radiusPercent = window.innerWidth <= 600 ? 43.5 : 45;
+  const radiusPercent = window.innerWidth <= 600 ? 42.2 : 44;
 
   for (let day = 1; day <= totalDays; day++) {
     const date = new Date(now.getFullYear(), now.getMonth(), day);
     const key = keyForDate(date);
+    const entries = normalizeDayEntries(data[key]);
     const angle = (day - 1) / totalDays * 360 - 90;
     const rad = angle * Math.PI / 180;
     const x = 50 + Math.cos(rad) * radiusPercent;
     const y = 50 + Math.sin(rad) * radiusPercent;
 
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "day-btn";
-    btn.textContent = day;
-    btn.style.left = `${x}%`;
-    btn.style.top = `${y}%`;
+    const item = document.createElement("button");
+    item.type = "button";
+    item.className = "day-item";
+    item.style.left = `${x}%`;
+    item.style.top = `${y}%`;
+    item.style.transform = "translate(-50%, -50%)";
+    item.setAttribute("aria-label", `Day ${day}, ${entries.length} interactions`);
 
-    const completed = Boolean(data[key]);
-    if (completed) btn.classList.add("completed");
-    if (day === today) btn.classList.add("today", "clickable");
-    if (day > today) btn.classList.add("future");
+    if (day === today) item.classList.add("today", "clickable");
+    if (day > today) item.classList.add("future");
+    if (entries.length >= MAX_INTERACTIONS_PER_DAY) item.classList.add("full");
 
-    btn.title = completed
-      ? `${key}: completed`
-      : day === today
-        ? "Today — click to check in"
-        : day > today
-          ? "Future day"
-          : "No check-in recorded";
+    const number = document.createElement("span");
+    number.className = "day-number";
+    number.textContent = day;
+    item.appendChild(number);
 
-    const transform = `translate(-50%, -50%)`;
-    btn.style.transform = transform;
-    btn.style.setProperty("--day-transform", transform);
+    const slots = document.createElement("span");
+    slots.className = "interaction-slots";
 
-    if (day === today && !completed) {
-      btn.addEventListener("click", openModal);
+    for (let slotIndex = 0; slotIndex < MAX_INTERACTIONS_PER_DAY; slotIndex++) {
+      const slot = document.createElement("span");
+      slot.className = "interaction-slot";
+      const entry = entries[slotIndex];
+
+      if (entry) {
+        slot.classList.add("filled", `category-${entry.category || "social"}`);
+        if (state.animateDateKey === key && state.animateSlotIndex === slotIndex) {
+          slot.classList.add("just-added");
+        }
+      }
+
+      slots.appendChild(slot);
     }
 
-    dayRing.appendChild(btn);
+    item.appendChild(slots);
+
+    if (day === today && entries.length < MAX_INTERACTIONS_PER_DAY) {
+      item.addEventListener("click", openModal);
+    }
+
+    dayRing.appendChild(item);
   }
+
+  // Only play the highlighter animation once after adding an interaction.
+  state.animateDateKey = null;
+  state.animateSlotIndex = null;
 }
 
 function renderStats(now) {
-  const entries = entriesForCurrentMonth();
+  const days = currentMonthDaysWithEntries();
+  const entries = flatCurrentMonthEntries();
   const data = getUserData();
 
   socialDaysBig.textContent = entries.length;
-  statSocialDays.textContent = entries.length;
+  daysInMonthLabel.textContent = `across ${days.length} social day${days.length === 1 ? "" : "s"}`;
 
-  const newPeople = entries.filter(entry => entry.category === "new-person").length;
-  const professional = entries.filter(entry => entry.category === "professional").length;
-  statNewPeople.textContent = newPeople;
-  statProfessional.textContent = professional;
+  statInteractions.textContent = entries.length;
+  statSocialDays.textContent = days.length;
+  statNewPeople.textContent = entries.filter(entry => entry.category === "new-person").length;
+  statProfessional.textContent = entries.filter(entry => entry.category === "professional").length;
 
   let streak = 0;
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-
   for (let cursor = new Date(today); ; cursor.setDate(cursor.getDate() - 1)) {
     if (cursor.getMonth() !== now.getMonth()) break;
-    const key = keyForDate(cursor);
-    if (data[key]) streak++;
+    const dayEntries = normalizeDayEntries(data[keyForDate(cursor)]);
+    if (dayEntries.length > 0) streak++;
     else break;
   }
-
-  statStreak.textContent = streak;
+  statStreak.textContent = `${streak} day${streak === 1 ? "" : "s"}`;
 }
 
 function renderRecent() {
-  const entries = entriesForCurrentMonth().slice().reverse().slice(0, 5);
+  const entries = flatCurrentMonthEntries()
+    .slice()
+    .sort((a, b) => (b.createdAt || b.dateKey).localeCompare(a.createdAt || a.dateKey))
+    .slice(0, 6);
+
   recentList.innerHTML = "";
 
   if (!entries.length) {
-    recentList.innerHTML = `<div class="recent-empty">No check-ins yet. Your first social day will appear here.</div>`;
+    recentList.innerHTML = `<div class="recent-empty">No interactions yet. Your first highlighted moment will appear here.</div>`;
     return;
   }
 
@@ -273,7 +306,6 @@ function renderRecent() {
   entries.forEach(entry => {
     const row = document.createElement("div");
     row.className = "recent-item";
-
     const d = new Date(`${entry.dateKey}T12:00:00`);
     const shortDate = d.toLocaleDateString(undefined, { day: "numeric", month: "short" });
 
@@ -295,11 +327,31 @@ function escapeHTML(value) {
   return div.innerHTML;
 }
 
-function openModal() {
-  const data = getUserData();
-  const todayKey = keyForDate(new Date());
-  if (data[todayKey]) return;
+function renderCapacityPreview() {
+  const todayEntries = normalizeDayEntries(getUserData()[keyForDate(new Date())]);
+  todayCapacity.innerHTML = "";
 
+  const label = document.createElement("span");
+  label.className = "capacity-label";
+  label.textContent = `${todayEntries.length}/${MAX_INTERACTIONS_PER_DAY} interactions today`;
+  todayCapacity.appendChild(label);
+
+  const lines = document.createElement("div");
+  lines.className = "capacity-lines";
+  for (let i = 0; i < MAX_INTERACTIONS_PER_DAY; i++) {
+    const line = document.createElement("span");
+    line.className = "capacity-line";
+    if (todayEntries[i]) line.classList.add("filled", `category-${todayEntries[i].category || "social"}`);
+    lines.appendChild(line);
+  }
+  todayCapacity.appendChild(lines);
+}
+
+function openModal() {
+  const todayEntries = normalizeDayEntries(getUserData()[keyForDate(new Date())]);
+  if (todayEntries.length >= MAX_INTERACTIONS_PER_DAY) return;
+
+  renderCapacityPreview();
   modal.classList.remove("hidden");
   document.body.style.overflow = "hidden";
   note.focus();
@@ -319,9 +371,7 @@ document.querySelectorAll("[data-close-modal]").forEach(el => {
 });
 
 document.addEventListener("keydown", (event) => {
-  if (event.key === "Escape" && !modal.classList.contains("hidden")) {
-    closeModal();
-  }
+  if (event.key === "Escape" && !modal.classList.contains("hidden")) closeModal();
 });
 
 note.addEventListener("input", () => {
@@ -336,20 +386,27 @@ checkInForm.addEventListener("submit", (event) => {
   const today = new Date();
   const todayKey = keyForDate(today);
   const data = getUserData();
+  const todayEntries = normalizeDayEntries(data[todayKey]);
 
-  if (data[todayKey]) {
+  if (todayEntries.length >= MAX_INTERACTIONS_PER_DAY) {
     closeModal();
     renderDashboard();
     return;
   }
 
-  data[todayKey] = {
+  const newEntry = {
     category,
     note: note.value.trim(),
     createdAt: new Date().toISOString()
   };
 
+  todayEntries.push(newEntry);
+  data[todayKey] = todayEntries;
   saveUserData(data);
+
+  state.animateDateKey = todayKey;
+  state.animateSlotIndex = todayEntries.length - 1;
+
   closeModal();
   renderDashboard();
 });
@@ -362,7 +419,5 @@ window.addEventListener("resize", () => {
 
 (function init() {
   const session = getJSON(STORAGE_SESSION, null);
-  if (session?.email) {
-    openDashboard(session.email);
-  }
+  if (session?.email) openDashboard(session.email);
 })();

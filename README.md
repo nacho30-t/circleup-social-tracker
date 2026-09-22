@@ -1,46 +1,45 @@
 # CircleUp — Social Habit Tracker
 
-A responsive front-end prototype for a daily social habit tracker.
+A responsive front-end prototype for tracking multiple social interactions per day.
 
-## What it does
+## Current prototype features
 
 - Register / log in with email + password.
-- Shows the current month in a circular tracker.
-- Only the current day can be checked in.
-- Lets the user classify a social interaction as:
+- Circular current-month tracker.
+- **Four interaction slots per day** instead of one daily checkbox.
+- Each new interaction fills one slot with an **animated highlighter swipe**.
+- Interaction categories:
   - Social
   - Professional
   - New person
   - Event
-- Optional short note.
-- Shows monthly stats and recent activity.
-- Stores the prototype data locally in the browser with `localStorage`.
+- Optional short note for each interaction.
+- Monthly totals, social-day count, streak and recent interactions.
+- Existing data from the first version is kept compatible: an older one-interaction day becomes the first slot for that day.
+- Data is stored locally in the browser with `localStorage`.
+
+## Change the number of daily slots
+
+Open `app.js` and change:
+
+```js
+const MAX_INTERACTIONS_PER_DAY = 4;
+```
+
+For example, use `5` for five interaction slots per day.
 
 ## Important: demo authentication
 
-This prototype stores the password locally in plain text **only so the project can run without a backend**.
-Do not use this mechanism in a real public website.
+This prototype stores passwords locally in plain text **only so the project can run without a backend**.
+Do not use this mechanism for a real public site.
 
-For a production version, replace the demo authentication with Supabase Auth, Firebase Auth or another secure authentication provider, and store check-ins in a database.
+For the real project, connect authentication and data storage to Supabase, Firebase or another secure backend.
 
-## How to open it
+## Updating the live Vercel website
 
-Option 1:
-Open `index.html` directly in your browser.
+If this project is connected to GitHub and Vercel:
 
-Option 2:
-Run a local server from this folder:
-
-```bash
-python -m http.server 8000
-```
-
-Then open:
-
-`http://localhost:8000`
-
-## Files
-
-- `index.html` — page structure
-- `styles.css` — visual design and responsive layout
-- `app.js` — registration, login, daily check-in, circular tracker and local storage
+1. Replace `index.html`, `styles.css`, `app.js` and `README.md` in the same GitHub repository.
+2. Commit the changes to the branch connected to Vercel.
+3. Vercel will automatically redeploy the same project.
+4. Your existing `.vercel.app` domain stays the same.

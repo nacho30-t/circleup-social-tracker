@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>CircleUp — Social Habit Tracker</title>
-  <meta name="description" content="A circular daily social habit tracker." />
+  <meta name="description" content="A circular social habit tracker with multiple daily interactions." />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -24,24 +24,24 @@
       <div class="auth-grid">
         <div class="hero-copy">
           <div class="eyebrow">SOCIAL HABIT TRACKER</div>
-          <h1>One meaningful interaction a day.</h1>
+          <h1>Make your social effort visible.</h1>
           <p>
-            Build a visible record of your social life, networking and new connections —
-            one day at a time.
+            Track every meaningful interaction you create during the day — from a casual conversation
+            to a professional connection — and watch your month fill up like a real highlighter habit tracker.
           </p>
 
           <div class="feature-list">
             <div class="feature-item">
               <span class="feature-dot"></span>
-              <div><strong>Daily only</strong><span>Only today’s check-in can be completed.</span></div>
+              <div><strong>Several interactions per day</strong><span>Each day has multiple reserved slots instead of a single check.</span></div>
             </div>
             <div class="feature-item">
               <span class="feature-dot"></span>
-              <div><strong>Circular tracker</strong><span>See your whole month at a glance.</span></div>
+              <div><strong>Highlighter effect</strong><span>Every new interaction is marked with an animated swipe.</span></div>
             </div>
             <div class="feature-item">
               <span class="feature-dot"></span>
-              <div><strong>Meaningful context</strong><span>Classify social, professional and new connections.</span></div>
+              <div><strong>Meaningful context</strong><span>Classify social, professional, new-person and event interactions.</span></div>
             </div>
           </div>
         </div>
@@ -64,7 +64,7 @@
           </form>
 
           <p class="demo-note">
-            Demo version: accounts and check-ins are stored only in this browser.
+            Demo version: accounts and interactions are stored only in this browser.
           </p>
         </div>
       </div>
@@ -91,7 +91,7 @@
               <h2 id="monthTitle">September 2026</h2>
             </div>
             <div class="legend">
-              <span><i class="legend-dot completed"></i>Completed</span>
+              <span><i class="legend-dot marker"></i>Interaction</span>
               <span><i class="legend-dot today"></i>Today</span>
             </div>
           </div>
@@ -100,16 +100,17 @@
             <div class="tracker-ring"></div>
             <div id="dayRing" class="day-ring"></div>
             <div class="tracker-center">
-              <span class="center-label">SOCIAL DAYS</span>
+              <span class="center-label">INTERACTIONS</span>
               <strong id="socialDaysBig">0</strong>
-              <span id="daysInMonthLabel">of 30 this month</span>
-              <button id="checkInBtn" class="checkin-btn" type="button">Check in today</button>
+              <span id="daysInMonthLabel">across 0 social days</span>
+              <button id="checkInBtn" class="checkin-btn" type="button">Add interaction</button>
             </div>
           </div>
 
-          <p class="tracker-help">
-            A day counts only when you intentionally log a social interaction.
-          </p>
+          <div class="slot-explainer">
+            <span class="marker-stroke demo-stroke"></span>
+            <p>Each small line is one interaction. Add one today and watch the highlighter sweep across it.</p>
+          </div>
         </section>
 
         <aside class="side-column">
@@ -117,12 +118,12 @@
             <div class="eyebrow">MONTHLY SNAPSHOT</div>
             <div class="stats-grid">
               <div class="stat">
-                <strong id="statSocialDays">0</strong>
-                <span>Social days</span>
+                <strong id="statInteractions">0</strong>
+                <span>Interactions</span>
               </div>
               <div class="stat">
-                <strong id="statStreak">0</strong>
-                <span>Current streak</span>
+                <strong id="statSocialDays">0</strong>
+                <span>Social days</span>
               </div>
               <div class="stat">
                 <strong id="statNewPeople">0</strong>
@@ -133,13 +134,17 @@
                 <span>Professional</span>
               </div>
             </div>
+            <div class="streak-row">
+              <span>Current social streak</span>
+              <strong id="statStreak">0 days</strong>
+            </div>
           </section>
 
           <section class="recent-card">
             <div class="section-heading compact">
               <div>
                 <div class="eyebrow">RECENT ACTIVITY</div>
-                <h3>Your latest check-ins</h3>
+                <h3>Your latest interactions</h3>
               </div>
             </div>
             <div id="recentList" class="recent-list"></div>
@@ -161,11 +166,13 @@
     <div class="modal-backdrop" data-close-modal></div>
     <div class="modal-card">
       <button class="modal-close" type="button" aria-label="Close" data-close-modal>×</button>
-      <div class="eyebrow">TODAY'S CHECK-IN</div>
-      <h2 id="modalTitle">Did you have a meaningful social interaction?</h2>
+      <div class="eyebrow">ADD TODAY'S INTERACTION</div>
+      <h2 id="modalTitle">What kind of connection did you make?</h2>
       <p class="modal-subtitle">
-        Pick the option that best describes it. You can add a short note too.
+        Every interaction fills one of today's four highlighter slots.
       </p>
+
+      <div id="todayCapacity" class="capacity-preview" aria-live="polite"></div>
 
       <form id="checkInForm">
         <div class="category-grid">
@@ -200,10 +207,10 @@
         </div>
 
         <label for="note">What happened? <span class="optional">(optional)</span></label>
-        <textarea id="note" maxlength="160" placeholder="e.g. Met two Erasmus students after class..."></textarea>
+        <textarea id="note" maxlength="160" placeholder="e.g. Spoke with a recruiter after the workshop..."></textarea>
         <div class="char-count"><span id="charCount">0</span>/160</div>
 
-        <button class="primary-btn" type="submit">Complete today</button>
+        <button id="saveInteractionBtn" class="primary-btn" type="submit">Highlight interaction</button>
       </form>
     </div>
   </div>
