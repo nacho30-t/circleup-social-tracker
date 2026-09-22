@@ -3,246 +3,421 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>highlife — Social Habit Tracker</title>
-  <meta name="description" content="Highlight the social moments that shape your month." />
+  <title>Highlife — Grow your social circle</title>
+  <meta name="description" content="Track social habits, follow friends' circles, and explore how your network grows." />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <div class="background-orb orb-a"></div>
-  <div class="background-orb orb-b"></div>
-
-  <main class="app-shell">
-    <section id="authView" class="auth-view">
-      <div class="brand" aria-label="highlife">
-        <span class="brand-symbol" aria-hidden="true"></span>
-        <span class="brand-word">highlife</span>
-      </div>
-
-      <div class="auth-grid">
-        <div class="hero-copy">
-          <div class="eyebrow">SOCIAL HABIT TRACKER</div>
-          <h1>Highlight the moments that grow your circle.</h1>
-          <p>
-            Log meaningful social interactions as they happen. Each one becomes a highlighter stroke,
-            turning your month into a visual record of the connections you actually made.
-          </p>
-
-          <div class="feature-list">
-            <div class="feature-item">
-              <span class="feature-stroke stroke-social"></span>
-              <div><strong>Several moments per day</strong><span>Four interaction slots keep the habit visible without making the tracker busy.</span></div>
-            </div>
-            <div class="feature-item">
-              <span class="feature-stroke stroke-new"></span>
-              <div><strong>Real highlighter motion</strong><span>New interactions sweep across the tracker like a marker on paper.</span></div>
-            </div>
-            <div class="feature-item">
-              <span class="feature-stroke stroke-professional"></span>
-              <div><strong>Useful social context</strong><span>See whether your month is social, professional, new-person or event driven.</span></div>
-            </div>
-          </div>
-        </div>
-
-        <div class="auth-card">
-          <div class="auth-tabs" role="tablist">
-            <button class="auth-tab active" data-tab="register" type="button">Register</button>
-            <button class="auth-tab" data-tab="login" type="button">Log in</button>
-          </div>
-
-          <form id="authForm">
-            <label for="email">Email</label>
-            <input id="email" type="email" placeholder="you@example.com" autocomplete="email" required />
-
-            <label for="password">Password</label>
-            <input id="password" type="password" placeholder="At least 6 characters" minlength="6" required />
-
-            <button id="authSubmit" class="primary-btn" type="submit">Create account</button>
-            <p id="authMessage" class="form-message" aria-live="polite"></p>
-          </form>
-
-          <p class="demo-note">Demo version: accounts and interactions are stored only in this browser.</p>
+  <div id="authView" class="auth-view">
+    <div class="auth-shell">
+      <div class="auth-copy">
+        <a class="auth-brand" href="#" aria-label="Highlife home">
+          <span class="brand-marker"></span>
+          <span>Highlife</span>
+        </a>
+        <div class="auth-kicker">SOCIAL GROWTH, MADE VISIBLE</div>
+        <h1>Highlight the people and moments that grow your world.</h1>
+        <p>
+          Build social habits, follow the circles of people you care about and watch your wider network
+          grow into a living social iceberg.
+        </p>
+        <div class="auth-points">
+          <div><span class="mini-highlight social"></span><b>Track</b><small>Up to four meaningful interactions every day.</small></div>
+          <div><span class="mini-highlight professional"></span><b>Connect</b><small>Add friends by email and follow how their circles develop.</small></div>
+          <div><span class="mini-highlight new-person"></span><b>Discover</b><small>See direct and second-degree connections in your iceberg.</small></div>
         </div>
       </div>
-    </section>
 
-    <section id="dashboardView" class="dashboard-view hidden">
-      <header class="topbar">
-        <div class="brand" aria-label="highlife">
-          <span class="brand-symbol" aria-hidden="true"></span>
-          <span class="brand-word">highlife</span>
+      <div class="auth-card">
+        <div class="auth-tabs">
+          <button class="auth-tab active" data-tab="register" type="button">Register</button>
+          <button class="auth-tab" data-tab="login" type="button">Log in</button>
+        </div>
+        <form id="authForm">
+          <label for="email">Email</label>
+          <input id="email" type="email" autocomplete="email" placeholder="you@gmail.com" required />
+          <label for="password">Password</label>
+          <input id="password" type="password" minlength="6" placeholder="At least 6 characters" required />
+          <button id="authSubmit" class="primary-btn" type="submit">Create account</button>
+          <p id="authMessage" class="form-message" aria-live="polite"></p>
+        </form>
+        <p class="prototype-note">
+          Prototype: accounts and social data are stored in this browser. Real multi-user sharing requires a backend.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div id="appView" class="app-view hidden">
+    <aside class="sidebar">
+      <div class="sidebar-top">
+        <button class="brand-button" data-route="circle" type="button">
+          <span class="brand-marker"></span>
+          <span class="brand-name">Highlife</span>
+        </button>
+
+        <nav class="side-nav" aria-label="Main navigation">
+          <button class="nav-item active" data-route="circle" type="button">
+            <span class="nav-icon">◉</span>
+            <span class="nav-copy"><b>My Circle</b><small>Daily social tracker</small></span>
+          </button>
+          <button class="nav-item" data-route="friends" type="button">
+            <span class="nav-icon">⌁</span>
+            <span class="nav-copy"><b>Friends</b><small>Follow their progress</small></span>
+            <span id="friendCountBadge" class="nav-badge">0</span>
+          </button>
+          <button class="nav-item" data-route="iceberg" type="button">
+            <span class="nav-icon">◇</span>
+            <span class="nav-copy"><b>Iceberg</b><small>Your wider network</small></span>
+          </button>
+          <button class="nav-item" data-route="history" type="button">
+            <span class="nav-icon">□</span>
+            <span class="nav-copy"><b>History</b><small>Months & years</small></span>
+          </button>
+          <button class="nav-item" data-route="learn" type="button">
+            <span class="nav-icon">?</span>
+            <span class="nav-copy"><b>How it works</b><small>Understand Highlife</small></span>
+          </button>
+        </nav>
+      </div>
+
+      <div class="sidebar-bottom">
+        <div class="sidebar-tip">
+          <span class="tip-marker"></span>
+          <div>
+            <b>Small actions compound.</b>
+            <p>A stronger circle is built one highlighted interaction at a time.</p>
+          </div>
+        </div>
+        <div class="account-row">
+          <div id="accountAvatar" class="avatar"></div>
+          <div class="account-copy">
+            <b id="accountName">You</b>
+            <span id="accountEmail"></span>
+          </div>
+          <button id="logoutBtn" class="icon-btn" title="Log out" type="button">↗</button>
+        </div>
+      </div>
+    </aside>
+
+    <header class="mobile-header">
+      <button id="mobileMenuBtn" class="icon-btn" type="button">☰</button>
+      <div class="mobile-brand"><span class="brand-marker"></span>Highlife</div>
+      <div id="mobileAvatar" class="avatar small"></div>
+    </header>
+
+    <main class="main-content">
+      <!-- CIRCLE -->
+      <section id="route-circle" class="route-view">
+        <div class="page-header">
+          <div>
+            <span class="eyebrow">MY CIRCLE</span>
+            <h1>Keep your social momentum visible.</h1>
+            <p>Each stroke is a meaningful interaction. The current day updates automatically as time moves forward.</p>
+          </div>
+          <button id="openCheckInHeader" class="header-action primary-btn compact" type="button">+ Add interaction</button>
         </div>
 
-        <div class="user-actions">
-          <span id="userEmail" class="user-email"></span>
-          <button id="logoutBtn" class="ghost-btn" type="button">Log out</button>
-        </div>
-      </header>
-
-      <div class="dashboard-grid">
-        <section class="tracker-card">
-          <div class="section-heading">
-            <div class="month-heading-block">
-              <div class="eyebrow">YOUR MONTH</div>
-              <h2 id="monthTitle">September 2026</h2>
-              <div class="month-navigation" aria-label="Browse months">
-                <button id="prevMonthBtn" class="month-nav-btn" type="button" aria-label="Previous month">←</button>
-                <button id="todayMonthBtn" class="month-nav-label" type="button">Current month</button>
-                <button id="nextMonthBtn" class="month-nav-btn" type="button" aria-label="Next month">→</button>
-                <button id="archiveBtn" class="archive-btn" type="button">All months</button>
+        <div class="circle-layout">
+          <section class="panel tracker-panel">
+            <div class="panel-heading">
+              <div>
+                <span class="eyebrow">YOUR MONTH</span>
+                <h2 id="monthTitle">September 2026</h2>
+                <div class="month-navigation">
+                  <button id="prevMonthBtn" class="round-btn" type="button" aria-label="Previous month">←</button>
+                  <button id="currentMonthBtn" class="text-btn" type="button">Current month</button>
+                  <button id="nextMonthBtn" class="round-btn" type="button" aria-label="Next month">→</button>
+                </div>
+              </div>
+              <div class="legend">
+                <span><i class="legend-line social"></i>Social</span>
+                <span><i class="legend-line new-person"></i>New person</span>
+                <span><i class="legend-line professional"></i>Professional</span>
+                <span><i class="legend-line event"></i>Event</span>
               </div>
             </div>
-            <div class="legend" aria-label="Interaction categories">
-              <span><i class="legend-stroke social"></i>Social</span>
-              <span><i class="legend-stroke new-person"></i>New person</span>
-              <span><i class="legend-stroke professional"></i>Professional</span>
-              <span><i class="legend-stroke event"></i>Event</span>
-              <span><i class="legend-today"></i>Today</span>
-            </div>
-          </div>
 
-          <div id="tracker" class="tracker" aria-label="Monthly social habit tracker">
-            <div class="tracker-ring"></div>
-            <div id="dayRing" class="day-ring"></div>
-
-            <div class="tracker-center">
-              <span id="centerLabel" class="center-label">TODAY</span>
-              <div class="today-count"><strong id="todayCount">0</strong><span id="centerCountSuffix">/4</span></div>
-              <span id="monthInteractionLabel">0 interactions this month</span>
-              <button id="checkInBtn" class="checkin-btn" type="button">Add interaction</button>
+            <div class="tracker-wrap">
+              <div class="tracker-ring-bg"></div>
+              <div id="dayRing" class="day-ring"></div>
+              <div class="tracker-center">
+                <span id="centerKicker" class="center-kicker">TODAY</span>
+                <div class="center-main"><strong id="todayCount">0</strong><span id="todaySuffix">/4</span></div>
+                <span id="monthInteractionLabel">0 interactions this month</span>
+                <button id="checkInBtn" class="marker-button" type="button"><span></span>Add interaction</button>
+              </div>
+              <div id="interactionToast" class="interaction-toast">+1 highlighted</div>
             </div>
 
-            <div id="interactionToast" class="interaction-toast" aria-live="polite">+1 highlighted</div>
-          </div>
+            <div class="tracker-caption">
+              <span class="sample-stroke"></span>
+              <p>The newest interaction sweeps across its slot like a real highlighter.</p>
+            </div>
+          </section>
 
-          <div class="slot-explainer">
-            <span class="marker-stroke demo-stroke"></span>
-            <p>Each small stroke is one interaction. Your newest one is highlighted from left to right.</p>
+          <aside class="circle-side">
+            <section class="panel stat-panel">
+              <span class="eyebrow">MONTHLY SNAPSHOT</span>
+              <div class="stats-grid">
+                <div class="metric"><strong id="statInteractions">0</strong><span>Interactions</span></div>
+                <div class="metric"><strong id="statSocialDays">0</strong><span>Social days</span></div>
+                <div class="metric"><strong id="statNewPeople">0</strong><span>New people</span></div>
+                <div class="metric"><strong id="statProfessional">0</strong><span>Professional</span></div>
+              </div>
+              <div class="streak-row"><span id="streakLabel">Current social streak</span><strong id="statStreak">0 days</strong></div>
+            </section>
+
+            <section class="panel recent-panel">
+              <div class="panel-heading simple">
+                <div><span class="eyebrow">RECENT ACTIVITY</span><h3 id="recentTitle">Latest interactions</h3></div>
+              </div>
+              <div id="recentList" class="recent-list"></div>
+            </section>
+
+            <section class="challenge-card">
+              <span class="challenge-arrow">↗</span>
+              <div><b>Today's small challenge</b><p id="dailyChallenge"></p></div>
+            </section>
+          </aside>
+        </div>
+      </section>
+
+      <!-- FRIENDS -->
+      <section id="route-friends" class="route-view hidden">
+        <div class="page-header">
+          <div>
+            <span class="eyebrow">FRIENDS</span>
+            <h1>Your circle doesn't grow alone.</h1>
+            <p>Add people by email, follow their monthly circles and notice how your social worlds overlap.</p>
+          </div>
+        </div>
+
+        <div class="friends-layout">
+          <section class="panel add-friend-panel">
+            <div>
+              <span class="eyebrow">ADD A FRIEND</span>
+              <h2>Connect by Gmail or email</h2>
+              <p>Enter their email address. In this prototype, Highlife generates a demo shared circle so you can test the experience.</p>
+            </div>
+            <form id="friendForm" class="friend-form">
+              <div class="email-input-wrap">
+                <span>✉</span>
+                <input id="friendEmailInput" type="email" placeholder="friend@gmail.com" required />
+              </div>
+              <button class="primary-btn compact" type="submit">Add friend</button>
+            </form>
+            <p id="friendMessage" class="friend-message" aria-live="polite"></p>
+          </section>
+
+          <section class="panel friends-panel">
+            <div class="panel-heading">
+              <div><span class="eyebrow">YOUR PEOPLE</span><h2>Connected circles</h2></div>
+              <div class="friend-filter"><span id="connectedSummary">0 connected</span></div>
+            </div>
+            <div id="friendsGrid" class="friends-grid"></div>
+          </section>
+        </div>
+      </section>
+
+      <!-- ICEBERG -->
+      <section id="route-iceberg" class="route-view hidden">
+        <div class="page-header iceberg-header">
+          <div>
+            <span class="eyebrow">SOCIAL ICEBERG</span>
+            <h1>See the network beneath your circle.</h1>
+            <p>Direct friends sit near the surface. Their connections extend below it. As your network grows, so does the iceberg.</p>
+          </div>
+          <div class="iceberg-score-card">
+            <span>Network reach</span>
+            <strong id="networkReach">0</strong>
+            <small>visible connections</small>
+          </div>
+        </div>
+
+        <div class="iceberg-layout">
+          <section class="panel iceberg-panel">
+            <div class="iceberg-toolbar">
+              <div class="iceberg-legend">
+                <span><i class="node-dot you"></i>You</span>
+                <span><i class="node-dot friend"></i>Friends</span>
+                <span><i class="node-dot second"></i>Friends of friends</span>
+              </div>
+              <span id="icebergGrowthLabel" class="growth-pill">Small network</span>
+            </div>
+
+            <div id="icebergStage" class="iceberg-stage">
+              <div class="sky-glow"></div>
+              <div class="water-line"><span>VISIBLE CIRCLE</span></div>
+              <svg id="icebergSvg" class="iceberg-svg" viewBox="0 0 900 620" role="img" aria-label="Social network iceberg visualization">
+                <defs>
+                  <linearGradient id="iceGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#dff6f0"/>
+                    <stop offset="55%" stop-color="#a8d8d0"/>
+                    <stop offset="100%" stop-color="#5ba89c"/>
+                  </linearGradient>
+                  <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+                    <feDropShadow dx="0" dy="10" stdDeviation="12" flood-color="#17463c" flood-opacity=".12"/>
+                  </filter>
+                </defs>
+                <g id="icebergShape"></g>
+                <g id="networkEdges"></g>
+                <g id="networkNodes"></g>
+              </svg>
+              <div class="iceberg-water"></div>
+            </div>
+          </section>
+
+          <aside class="iceberg-side">
+            <section class="panel network-stats">
+              <span class="eyebrow">NETWORK LAYERS</span>
+              <div class="network-stat"><span>Direct friends</span><strong id="directFriendCount">0</strong></div>
+              <div class="network-stat"><span>Second-degree links</span><strong id="secondDegreeCount">0</strong></div>
+              <div class="network-stat"><span>Potential introductions</span><strong id="potentialIntroCount">0</strong></div>
+            </section>
+
+            <section class="panel node-detail-panel">
+              <span class="eyebrow">SELECTED CONNECTION</span>
+              <div id="nodeDetail" class="node-detail">
+                <div class="node-detail-avatar">H</div>
+                <div>
+                  <h3>Your wider network</h3>
+                  <p>Click any person in the iceberg to understand how they connect back to you.</p>
+                </div>
+              </div>
+            </section>
+
+            <section class="insight-card">
+              <span class="insight-icon">✦</span>
+              <div><b id="networkInsightTitle">Start with one friend</b><p id="networkInsightText">Every direct connection can reveal a wider layer of people you could eventually meet.</p></div>
+            </section>
+          </aside>
+        </div>
+      </section>
+
+      <!-- HISTORY -->
+      <section id="route-history" class="route-view hidden">
+        <div class="page-header">
+          <div>
+            <span class="eyebrow">HISTORY</span>
+            <h1>Your social life, month by month.</h1>
+            <p>Highlife keeps previous months visible while the current circle keeps moving forward automatically.</p>
+          </div>
+          <div class="year-controls">
+            <button id="prevYearBtn" class="round-btn" type="button">←</button>
+            <strong id="historyYear">2026</strong>
+            <button id="nextYearBtn" class="round-btn" type="button">→</button>
+          </div>
+        </div>
+        <div id="historyGrid" class="history-grid"></div>
+      </section>
+
+      <!-- LEARN -->
+      <section id="route-learn" class="route-view hidden">
+        <div class="page-header">
+          <div>
+            <span class="eyebrow">HOW HIGHLIFE WORKS</span>
+            <h1>A simple model for social growth.</h1>
+            <p>The app turns everyday social behaviour into something you can see, reflect on and build over time.</p>
+          </div>
+        </div>
+
+        <div class="learn-grid">
+          <article class="learn-card">
+            <span class="learn-number">01</span>
+            <span class="learn-stroke social"></span>
+            <h2>Highlight interactions</h2>
+            <p>Each day has four slots. Add a stroke only when a meaningful interaction actually happened.</p>
+          </article>
+          <article class="learn-card">
+            <span class="learn-number">02</span>
+            <span class="learn-stroke professional"></span>
+            <h2>Build your direct circle</h2>
+            <p>Add friends by email and follow their progress. Their circles help you see social momentum beyond your own.</p>
+          </article>
+          <article class="learn-card">
+            <span class="learn-number">03</span>
+            <span class="learn-stroke new-person"></span>
+            <h2>Reveal the iceberg</h2>
+            <p>Your direct friends are only the visible layer. Friends of friends represent the wider network beneath the surface.</p>
+          </article>
+          <article class="learn-card">
+            <span class="learn-number">04</span>
+            <span class="learn-stroke event"></span>
+            <h2>Look back, not just forward</h2>
+            <p>Previous months stay accessible so you can notice how habits, friendships and network reach change over time.</p>
+          </article>
+        </div>
+
+        <section class="panel concept-panel">
+          <div>
+            <span class="eyebrow">THE IDEA</span>
+            <h2>Why an iceberg?</h2>
+            <p>
+              The people you know directly are only the visible part of your social world. Each person carries a network of their own.
+              Highlife makes that hidden potential visible without turning it into a score or competition.
+            </p>
+          </div>
+          <div class="mini-iceberg">
+            <div class="mini-water"></div>
+            <div class="mini-iceberg-shape"></div>
+            <span class="mini-node n1"></span><span class="mini-node n2"></span><span class="mini-node n3"></span>
+            <span class="mini-node n4"></span><span class="mini-node n5"></span><span class="mini-node n6"></span>
           </div>
         </section>
+      </section>
+    </main>
 
-        <aside class="side-column">
-          <section class="stats-card">
-            <div id="snapshotEyebrow" class="eyebrow">MONTHLY SNAPSHOT</div>
-            <div class="stats-grid three">
-              <div class="stat featured-stat">
-                <strong id="statInteractions">0</strong>
-                <span>Interactions</span>
-              </div>
-              <div class="stat">
-                <strong id="statNewPeople">0</strong>
-                <span>New people</span>
-              </div>
-              <div class="stat">
-                <strong id="statProfessional">0</strong>
-                <span>Professional</span>
-              </div>
-            </div>
-            <div class="mini-metrics">
-              <div><span>Social days</span><strong id="statSocialDays">0</strong></div>
-              <div><span id="statStreakLabel">Current streak</span><strong id="statStreak">0 days</strong></div>
-            </div>
-          </section>
+    <div id="mobileScrim" class="mobile-scrim hidden"></div>
+  </div>
 
-          <section class="recent-card">
-            <div class="section-heading compact">
-              <div>
-                <div class="eyebrow">RECENT ACTIVITY</div>
-                <h3 id="recentTitle">Your latest interactions</h3>
-              </div>
-            </div>
-            <div id="recentList" class="recent-list"></div>
-          </section>
-
-          <section class="prompt-card">
-            <span class="prompt-icon">↗</span>
-            <div>
-              <strong>Today's small challenge</strong>
-              <p id="dailyChallenge">Start one conversation today that you would not have started otherwise.</p>
-            </div>
-          </section>
-        </aside>
-      </div>
-    </section>
-  </main>
-
-  <div id="checkInModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-    <div class="modal-backdrop" data-close-modal></div>
+  <!-- CHECK-IN MODAL -->
+  <div id="checkInModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="checkInTitle">
+    <div class="modal-backdrop" data-close-checkin></div>
     <div class="modal-card">
-      <button class="modal-close" type="button" aria-label="Close" data-close-modal>×</button>
-      <div class="eyebrow">ADD TODAY'S INTERACTION</div>
-      <h2 id="modalTitle">What kind of connection did you make?</h2>
-      <p class="modal-subtitle">Choose a type and highlife will add one highlighter stroke to today.</p>
-
-      <div id="todayCapacity" class="capacity-preview" aria-live="polite"></div>
-
+      <button class="modal-close" data-close-checkin type="button">×</button>
+      <span class="eyebrow">ADD TODAY'S INTERACTION</span>
+      <h2 id="checkInTitle">What kind of connection did you make?</h2>
+      <p class="modal-subtitle">Choose one category. Highlife will sweep a new highlighter stroke into today's circle.</p>
+      <div id="todayCapacity" class="capacity-preview"></div>
       <form id="checkInForm">
         <div class="category-grid">
-          <label class="category-option social-option">
-            <input type="radio" name="category" value="social" checked />
-            <span class="category-card">
-              <i class="category-swatch"></i>
-              <b>Social</b>
-              <small>Friends, classmates, casual plans</small>
-            </span>
-          </label>
-          <label class="category-option professional-option">
-            <input type="radio" name="category" value="professional" />
-            <span class="category-card">
-              <i class="category-swatch"></i>
-              <b>Professional</b>
-              <small>Networking, career or work connection</small>
-            </span>
-          </label>
-          <label class="category-option new-option">
-            <input type="radio" name="category" value="new-person" />
-            <span class="category-card">
-              <i class="category-swatch"></i>
-              <b>New person</b>
-              <small>You met someone new today</small>
-            </span>
-          </label>
-          <label class="category-option event-option">
-            <input type="radio" name="category" value="event" />
-            <span class="category-card">
-              <i class="category-swatch"></i>
-              <b>Event</b>
-              <small>Meetup, university or professional event</small>
-            </span>
-          </label>
+          <label class="category-option social-option"><input type="radio" name="category" value="social" checked><span><i></i><b>Social</b><small>Friends, classmates, casual plans</small></span></label>
+          <label class="category-option professional-option"><input type="radio" name="category" value="professional"><span><i></i><b>Professional</b><small>Networking, work or career</small></span></label>
+          <label class="category-option new-option"><input type="radio" name="category" value="new-person"><span><i></i><b>New person</b><small>Someone you met for the first time</small></span></label>
+          <label class="category-option event-option"><input type="radio" name="category" value="event"><span><i></i><b>Event</b><small>University, meetup or group activity</small></span></label>
         </div>
-
-        <label for="note">What happened? <span class="optional">(optional)</span></label>
-        <textarea id="note" maxlength="160" placeholder="e.g. Spoke with a recruiter after the workshop..."></textarea>
+        <label for="interactionNote">What happened? <span class="optional">(optional)</span></label>
+        <textarea id="interactionNote" maxlength="160" placeholder="e.g. Talked to someone new after class..."></textarea>
         <div class="char-count"><span id="charCount">0</span>/160</div>
-
-        <button id="saveInteractionBtn" class="primary-btn" type="submit">Highlight interaction</button>
+        <button id="saveInteractionBtn" class="primary-btn" type="submit">Highlight this interaction</button>
       </form>
     </div>
   </div>
 
-
-  <div id="archiveModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="archiveTitle">
-    <div class="modal-backdrop" data-close-archive></div>
-    <div class="modal-card archive-modal-card">
-      <button class="modal-close" type="button" aria-label="Close" data-close-archive>×</button>
-      <div class="eyebrow">YOUR HISTORY</div>
-      <div class="archive-heading">
-        <div>
-          <h2 id="archiveTitle">All months</h2>
-          <p class="modal-subtitle">Jump back to any month. Past highlights stay exactly where you logged them.</p>
-        </div>
-        <button id="archiveCurrentBtn" class="archive-current-btn" type="button">Go to current month</button>
+  <!-- FRIEND CIRCLE MODAL -->
+  <div id="friendCircleModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="friendCircleTitle">
+    <div class="modal-backdrop" data-close-friend-circle></div>
+    <div class="modal-card wide">
+      <button class="modal-close" data-close-friend-circle type="button">×</button>
+      <span class="eyebrow">FRIEND CIRCLE</span>
+      <div class="friend-circle-heading">
+        <div id="friendCircleAvatar" class="avatar large"></div>
+        <div><h2 id="friendCircleTitle">Friend</h2><p id="friendCircleEmail"></p></div>
       </div>
-      <div class="archive-year-nav">
-        <button id="prevYearBtn" class="month-nav-btn" type="button" aria-label="Previous year">←</button>
-        <strong id="archiveYearTitle">2026</strong>
-        <button id="nextYearBtn" class="month-nav-btn" type="button" aria-label="Next year">→</button>
+      <div class="friend-circle-summary">
+        <div><strong id="friendCircleInteractions">0</strong><span>Interactions this month</span></div>
+        <div><strong id="friendCircleDays">0</strong><span>Social days</span></div>
+        <div><strong id="friendCircleGrowth">0%</strong><span>Month progress</span></div>
       </div>
-      <div id="archiveMonths" class="archive-months"></div>
-      <p class="archive-note">highlife automatically opens on the real current month whenever you come back. When the date changes, the active day moves with it.</p>
+      <div class="friend-circle-view">
+        <div id="friendMiniRing" class="friend-mini-ring"></div>
+        <div class="friend-mini-center"><strong id="friendMiniTotal">0</strong><span>highlights</span></div>
+      </div>
+      <p class="prototype-note centered">In this static prototype, friend activity is simulated from the email address. A real version would read the friend's consented account data from the backend.</p>
     </div>
   </div>
 
