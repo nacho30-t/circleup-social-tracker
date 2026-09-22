@@ -1,4 +1,4 @@
-// Keep the original storage keys so existing CircleUp demo data remains available after rebranding to highlife.
+// Keep the original storage keys so existing demo data remains available after every highlife update.
 const STORAGE_USERS = "circleup_users_v1";
 const STORAGE_SESSION = "circleup_session_v1";
 const STORAGE_DATA = "circleup_data_v1";
@@ -8,7 +8,11 @@ const state = {
   authMode: "register",
   email: null,
   animateDateKey: null,
-  animateSlotIndex: null
+  animateSlotIndex: null,
+  selectedMonth: startOfMonth(new Date()),
+  followCurrentMonth: true,
+  archiveYear: new Date().getFullYear(),
+  lastObservedDay: null
 };
 
 const $ = (id) => document.getElementById(id);
@@ -24,24 +28,41 @@ const tabs = document.querySelectorAll(".auth-tab");
 const dayRing = $("dayRing");
 const monthTitle = $("monthTitle");
 const userEmail = $("userEmail");
+const centerLabel = $("centerLabel");
 const todayCount = $("todayCount");
+const centerCountSuffix = $("centerCountSuffix");
 const monthInteractionLabel = $("monthInteractionLabel");
 const checkInBtn = $("checkInBtn");
 const interactionToast = $("interactionToast");
 const statInteractions = $("statInteractions");
 const statSocialDays = $("statSocialDays");
 const statStreak = $("statStreak");
+const statStreakLabel = $("statStreakLabel");
 const statNewPeople = $("statNewPeople");
 const statProfessional = $("statProfessional");
+const snapshotEyebrow = $("snapshotEyebrow");
 const recentList = $("recentList");
+const recentTitle = $("recentTitle");
 const dailyChallenge = $("dailyChallenge");
 const logoutBtn = $("logoutBtn");
+
+const prevMonthBtn = $("prevMonthBtn");
+const nextMonthBtn = $("nextMonthBtn");
+const todayMonthBtn = $("todayMonthBtn");
+const archiveBtn = $("archiveBtn");
 
 const modal = $("checkInModal");
 const checkInForm = $("checkInForm");
 const note = $("note");
 const charCount = $("charCount");
 const todayCapacity = $("todayCapacity");
+
+const archiveModal = $("archiveModal");
+const archiveMonths = $("archiveMonths");
+const archiveYearTitle = $("archiveYearTitle");
+const prevYearBtn = $("prevYearBtn");
+const nextYearBtn = $("nextYearBtn");
+const archiveCurrentBtn = $("archiveCurrentBtn");
 
 const CATEGORY_LABELS = {
   social: "Social",
@@ -81,6 +102,11 @@ function getJSON(key, fallback) {
 
 function setJSON(key, value) { localStorage.setItem(key, JSON.stringify(value)); }
 function normalizeEmail(value) { return value.trim().toLowerCase(); }
+function startOfMonth(date) { return new Date(date.getFullYear(), date.getMonth(), 1); }
+function addMonths(date, amount) { return new Date(date.getFullYear(), date.getMonth() + amount, 1); }
+function isSameMonth(a, b) { return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth(); }
+function isAfterMonth(a, b) { return startOfMonth(a).getTime() > startOfMonth(b).getTime(); }
+function daysInMonth(date) { return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate(); }
 
 function setAuthMode(mode) {
   state.authMode = mode;
@@ -107,7 +133,7 @@ authForm.addEventListener("submit", (event) => {
       authMessage.textContent = "An account with this email already exists. Try logging in.";
       return;
     }
-    // DEMO ONLY. Use a real authentication service before using this publicly for real accounts.
+    // DEMO ONLY. Replace localStorage authentication with a real auth provider for a public production app.
     users[email] = { password, createdAt: new Date().toISOString() };
     setJSON(STORAGE_USERS, users);
     setJSON(STORAGE_SESSION, { email });
@@ -132,6 +158,10 @@ logoutBtn.addEventListener("click", () => {
 
 function openDashboard(email) {
   state.email = email;
+  state.selectedMonth = startOfMonth(new Date());
+  state.followCurrentMonth = true;
+  state.archiveYear = new Date().getFullYear();
+  state.lastObservedDay = keyForDate(new Date());
   authView.classList.add("hidden");
   dashboardView.classList.remove("hidden");
   userEmail.textContent = email;
@@ -163,12 +193,12 @@ function keyForDate(date) {
   return `${y}-${m}-${d}`;
 }
 
-function monthKey(date) { return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`; }
-function daysInMonth(date) { return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate(); }
+function monthKey(date) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+}
 
-function currentMonthDaysWithEntries() {
-  const now = new Date();
-  const prefix = monthKey(now);
+function monthDaysWithEntries(date) {
+  const prefix = monthKey(date);
   const data = getUserData();
   return Object.entries(data)
     .filter(([dateKey]) => dateKey.startsWith(prefix))
@@ -177,39 +207,70 @@ function currentMonthDaysWithEntries() {
     .sort((a, b) => a.dateKey.localeCompare(b.dateKey));
 }
 
-function flatCurrentMonthEntries() {
-  return currentMonthDaysWithEntries().flatMap(day =>
+function flatMonthEntries(date) {
+  return monthDaysWithEntries(date).flatMap(day =>
     day.entries.map((entry, index) => ({ ...entry, dateKey: day.dateKey, slotIndex: index }))
   );
 }
 
-function renderDashboard() {
-  const now = new Date();
-  const totalDays = daysInMonth(now);
-  const monthName = now.toLocaleDateString("en-GB", { month: "long", year: "numeric" });
-  monthTitle.textContent = monthName;
-  dailyChallenge.textContent = CHALLENGES[now.getDate() % CHALLENGES.length];
-
-  renderRing(now, totalDays);
-  renderStats(now);
-  renderRecent();
-
-  const todayEntries = normalizeDayEntries(getUserData()[keyForDate(now)]);
-  const remaining = MAX_INTERACTIONS_PER_DAY - todayEntries.length;
-  todayCount.textContent = todayEntries.length;
-  monthInteractionLabel.textContent = `${flatCurrentMonthEntries().length} interaction${flatCurrentMonthEntries().length === 1 ? "" : "s"} this month`;
-  checkInBtn.disabled = remaining <= 0;
-  checkInBtn.textContent = remaining <= 0 ? "Today's slots are full ✓" : `Add interaction (${remaining} left)`;
+function setSelectedMonth(date, followCurrent = false) {
+  const current = startOfMonth(new Date());
+  const target = startOfMonth(date);
+  if (isAfterMonth(target, current)) return;
+  state.selectedMonth = target;
+  state.followCurrentMonth = followCurrent || isSameMonth(target, current);
+  renderDashboard();
 }
 
-function renderRing(now, totalDays) {
+function renderDashboard() {
+  const now = new Date();
+  const selected = state.selectedMonth;
+  const selectedIsCurrent = isSameMonth(selected, now);
+  const totalDays = daysInMonth(selected);
+  const monthName = selected.toLocaleDateString("en-GB", { month: "long", year: "numeric" });
+  const selectedEntries = flatMonthEntries(selected);
+  const selectedDays = monthDaysWithEntries(selected);
+
+  monthTitle.textContent = monthName;
+  dailyChallenge.textContent = CHALLENGES[now.getDate() % CHALLENGES.length];
+  todayMonthBtn.textContent = selectedIsCurrent ? "Current month" : "Back to current";
+  todayMonthBtn.classList.toggle("active", selectedIsCurrent);
+  nextMonthBtn.disabled = selectedIsCurrent;
+  snapshotEyebrow.textContent = selectedIsCurrent ? "MONTHLY SNAPSHOT" : `${selected.toLocaleDateString("en-GB", { month: "short" }).toUpperCase()} SNAPSHOT`;
+  recentTitle.textContent = selectedIsCurrent ? "Your latest interactions" : `Interactions from ${selected.toLocaleDateString("en-GB", { month: "long" })}`;
+
+  renderRing(selected, totalDays, now);
+  renderStats(selected, now);
+  renderRecent(selected);
+
+  if (selectedIsCurrent) {
+    const todayEntries = normalizeDayEntries(getUserData()[keyForDate(now)]);
+    const remaining = MAX_INTERACTIONS_PER_DAY - todayEntries.length;
+    centerLabel.textContent = "TODAY";
+    todayCount.textContent = todayEntries.length;
+    centerCountSuffix.textContent = `/${MAX_INTERACTIONS_PER_DAY}`;
+    monthInteractionLabel.textContent = `${selectedEntries.length} interaction${selectedEntries.length === 1 ? "" : "s"} this month`;
+    checkInBtn.classList.remove("hidden");
+    checkInBtn.disabled = remaining <= 0;
+    checkInBtn.textContent = remaining <= 0 ? "Today's slots are full ✓" : `Add interaction (${remaining} left)`;
+  } else {
+    centerLabel.textContent = "MONTH TOTAL";
+    todayCount.textContent = selectedEntries.length;
+    centerCountSuffix.textContent = " highlights";
+    monthInteractionLabel.textContent = `${selectedDays.length} social day${selectedDays.length === 1 ? "" : "s"}`;
+    checkInBtn.classList.add("hidden");
+  }
+}
+
+function renderRing(selected, totalDays, now) {
   dayRing.innerHTML = "";
   const data = getUserData();
+  const selectedIsCurrent = isSameMonth(selected, now);
   const today = now.getDate();
   const radiusPercent = window.innerWidth <= 650 ? 42.4 : 44.1;
 
   for (let day = 1; day <= totalDays; day++) {
-    const date = new Date(now.getFullYear(), now.getMonth(), day);
+    const date = new Date(selected.getFullYear(), selected.getMonth(), day);
     const key = keyForDate(date);
     const entries = normalizeDayEntries(data[key]);
     const angle = (day - 1) / totalDays * 360 - 90;
@@ -223,10 +284,11 @@ function renderRing(now, totalDays) {
     item.style.left = `${x}%`;
     item.style.top = `${y}%`;
     item.style.transform = "translate(-50%, -50%)";
-    item.setAttribute("aria-label", `Day ${day}, ${entries.length} interactions`);
+    item.setAttribute("aria-label", `${date.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}, ${entries.length} interactions`);
 
-    if (day === today) item.classList.add("today", "clickable");
-    if (day > today) item.classList.add("future");
+    if (selectedIsCurrent && day === today) item.classList.add("today", "clickable");
+    if (selectedIsCurrent && day > today) item.classList.add("future");
+    if (!selectedIsCurrent) item.classList.add("past-month-day");
     if (entries.length >= MAX_INTERACTIONS_PER_DAY) item.classList.add("full");
 
     const number = document.createElement("span");
@@ -249,7 +311,7 @@ function renderRing(now, totalDays) {
     }
 
     item.appendChild(slots);
-    if (day === today && entries.length < MAX_INTERACTIONS_PER_DAY) item.addEventListener("click", openModal);
+    if (selectedIsCurrent && day === today && entries.length < MAX_INTERACTIONS_PER_DAY) item.addEventListener("click", openModal);
     dayRing.appendChild(item);
   }
 
@@ -257,35 +319,52 @@ function renderRing(now, totalDays) {
   state.animateSlotIndex = null;
 }
 
-function renderStats(now) {
-  const days = currentMonthDaysWithEntries();
-  const entries = flatCurrentMonthEntries();
+function renderStats(selected, now) {
+  const days = monthDaysWithEntries(selected);
+  const entries = flatMonthEntries(selected);
   const data = getUserData();
+  const selectedIsCurrent = isSameMonth(selected, now);
 
   statInteractions.textContent = entries.length;
   statSocialDays.textContent = days.length;
   statNewPeople.textContent = entries.filter(entry => entry.category === "new-person").length;
   statProfessional.textContent = entries.filter(entry => entry.category === "professional").length;
 
-  let streak = 0;
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  for (let cursor = new Date(today); ; cursor.setDate(cursor.getDate() - 1)) {
-    if (cursor.getMonth() !== now.getMonth()) break;
-    if (normalizeDayEntries(data[keyForDate(cursor)]).length > 0) streak++;
-    else break;
+  if (selectedIsCurrent) {
+    let streak = 0;
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    for (let cursor = new Date(today); cursor.getMonth() === selected.getMonth() && cursor.getFullYear() === selected.getFullYear(); cursor.setDate(cursor.getDate() - 1)) {
+      if (normalizeDayEntries(data[keyForDate(cursor)]).length > 0) streak++;
+      else break;
+    }
+    statStreakLabel.textContent = "Current streak";
+    statStreak.textContent = `${streak} day${streak === 1 ? "" : "s"}`;
+  } else {
+    const activeDays = new Set(days.map(day => Number(day.dateKey.slice(-2))));
+    let longest = 0;
+    let running = 0;
+    for (let day = 1; day <= daysInMonth(selected); day++) {
+      if (activeDays.has(day)) {
+        running++;
+        longest = Math.max(longest, running);
+      } else {
+        running = 0;
+      }
+    }
+    statStreakLabel.textContent = "Best streak";
+    statStreak.textContent = `${longest} day${longest === 1 ? "" : "s"}`;
   }
-  statStreak.textContent = `${streak} day${streak === 1 ? "" : "s"}`;
 }
 
-function renderRecent() {
-  const entries = flatCurrentMonthEntries()
+function renderRecent(selected) {
+  const entries = flatMonthEntries(selected)
     .slice()
     .sort((a, b) => (b.createdAt || b.dateKey).localeCompare(a.createdAt || a.dateKey))
     .slice(0, 6);
 
   recentList.innerHTML = "";
   if (!entries.length) {
-    recentList.innerHTML = `<div class="recent-empty">No interactions yet. Your first highlighted moment will appear here.</div>`;
+    recentList.innerHTML = `<div class="recent-empty">No interactions recorded in this month yet.</div>`;
     return;
   }
 
@@ -333,6 +412,7 @@ function renderCapacityPreview() {
 }
 
 function openModal() {
+  if (!isSameMonth(state.selectedMonth, new Date())) return;
   const todayEntries = normalizeDayEntries(getUserData()[keyForDate(new Date())]);
   if (todayEntries.length >= MAX_INTERACTIONS_PER_DAY) return;
   renderCapacityPreview();
@@ -355,9 +435,109 @@ function showInteractionToast(category) {
   interactionToast.classList.add("show");
 }
 
+function openArchive() {
+  state.archiveYear = state.selectedMonth.getFullYear();
+  renderArchive();
+  archiveModal.classList.remove("hidden");
+  document.body.style.overflow = "hidden";
+}
+
+function closeArchive() {
+  archiveModal.classList.add("hidden");
+  document.body.style.overflow = "";
+}
+
+
+function earliestRelevantYear() {
+  const years = [new Date().getFullYear()];
+  const data = getUserData();
+  Object.keys(data).forEach(key => {
+    const year = Number(key.slice(0, 4));
+    if (Number.isFinite(year)) years.push(year);
+  });
+  const users = getJSON(STORAGE_USERS, {});
+  const createdAt = users[state.email]?.createdAt;
+  if (createdAt) {
+    const createdYear = new Date(createdAt).getFullYear();
+    if (Number.isFinite(createdYear)) years.push(createdYear);
+  }
+  return Math.min(...years);
+}
+
+function renderArchive() {
+  const now = new Date();
+  const currentMonth = startOfMonth(now);
+  archiveYearTitle.textContent = state.archiveYear;
+  prevYearBtn.disabled = state.archiveYear <= earliestRelevantYear();
+  nextYearBtn.disabled = state.archiveYear >= now.getFullYear();
+  archiveMonths.innerHTML = "";
+
+  for (let month = 0; month < 12; month++) {
+    const date = new Date(state.archiveYear, month, 1);
+    const future = isAfterMonth(date, currentMonth);
+    const entries = flatMonthEntries(date);
+    const days = monthDaysWithEntries(date);
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "archive-month";
+    if (isSameMonth(date, state.selectedMonth)) btn.classList.add("selected");
+    if (isSameMonth(date, currentMonth)) btn.classList.add("current");
+    if (future) btn.classList.add("future");
+    btn.disabled = future;
+    btn.innerHTML = `
+      <span class="archive-month-name">${date.toLocaleDateString("en-GB", { month: "long" })}</span>
+      <strong>${entries.length}</strong>
+      <span class="archive-month-meta">${days.length} social day${days.length === 1 ? "" : "s"}</span>
+      ${isSameMonth(date, currentMonth) ? '<i class="archive-current-dot">now</i>' : ''}`;
+    if (!future) {
+      btn.addEventListener("click", () => {
+        setSelectedMonth(date, isSameMonth(date, currentMonth));
+        closeArchive();
+      });
+    }
+    archiveMonths.appendChild(btn);
+  }
+}
+
+function syncWithRealDate() {
+  const now = new Date();
+  const todayKey = keyForDate(now);
+  if (state.lastObservedDay === null) state.lastObservedDay = todayKey;
+  if (todayKey === state.lastObservedDay) return;
+
+  state.lastObservedDay = todayKey;
+  if (state.followCurrentMonth) state.selectedMonth = startOfMonth(now);
+  if (state.email) renderDashboard();
+  if (!archiveModal.classList.contains("hidden")) {
+    if (state.archiveYear > now.getFullYear()) state.archiveYear = now.getFullYear();
+    renderArchive();
+  }
+}
+
+prevMonthBtn.addEventListener("click", () => setSelectedMonth(addMonths(state.selectedMonth, -1), false));
+nextMonthBtn.addEventListener("click", () => setSelectedMonth(addMonths(state.selectedMonth, 1), isSameMonth(addMonths(state.selectedMonth, 1), new Date())));
+todayMonthBtn.addEventListener("click", () => setSelectedMonth(new Date(), true));
+archiveBtn.addEventListener("click", openArchive);
+
+prevYearBtn.addEventListener("click", () => {
+  if (state.archiveYear > earliestRelevantYear()) { state.archiveYear--; renderArchive(); }
+});
+nextYearBtn.addEventListener("click", () => {
+  if (state.archiveYear < new Date().getFullYear()) { state.archiveYear++; renderArchive(); }
+});
+archiveCurrentBtn.addEventListener("click", () => {
+  setSelectedMonth(new Date(), true);
+  closeArchive();
+});
+document.querySelectorAll("[data-close-archive]").forEach(el => el.addEventListener("click", closeArchive));
+
 checkInBtn.addEventListener("click", openModal);
 document.querySelectorAll("[data-close-modal]").forEach(el => el.addEventListener("click", closeModal));
-document.addEventListener("keydown", event => { if (event.key === "Escape" && !modal.classList.contains("hidden")) closeModal(); });
+document.addEventListener("keydown", event => {
+  if (event.key !== "Escape") return;
+  if (!modal.classList.contains("hidden")) closeModal();
+  else if (!archiveModal.classList.contains("hidden")) closeArchive();
+});
 note.addEventListener("input", () => { charCount.textContent = note.value.length; });
 
 checkInForm.addEventListener("submit", (event) => {
@@ -378,6 +558,8 @@ checkInForm.addEventListener("submit", (event) => {
   todayEntries.push({ category, note: note.value.trim(), createdAt: new Date().toISOString() });
   data[todayKey] = todayEntries;
   saveUserData(data);
+  state.selectedMonth = startOfMonth(today);
+  state.followCurrentMonth = true;
   state.animateDateKey = todayKey;
   state.animateSlotIndex = todayEntries.length - 1;
 
@@ -387,10 +569,18 @@ checkInForm.addEventListener("submit", (event) => {
 });
 
 window.addEventListener("resize", () => {
-  if (!dashboardView.classList.contains("hidden")) renderRing(new Date(), daysInMonth(new Date()));
+  if (!dashboardView.classList.contains("hidden")) renderRing(state.selectedMonth, daysInMonth(state.selectedMonth), new Date());
 });
+
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") syncWithRealDate();
+});
+
+// If the page remains open overnight, the active day/month updates automatically without a refresh.
+setInterval(syncWithRealDate, 30000);
 
 (function init() {
   const session = getJSON(STORAGE_SESSION, null);
+  state.lastObservedDay = keyForDate(new Date());
   if (session?.email) openDashboard(session.email);
 })();

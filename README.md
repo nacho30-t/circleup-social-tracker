@@ -32,3 +32,12 @@ Upload/replace `index.html`, `styles.css`, and `app.js` in your existing GitHub 
 ## Demo authentication note
 
 The current prototype stores login credentials and interaction data in the browser using `localStorage`. This is suitable for a classroom prototype, not for a real public authentication system. Use a real backend/authentication provider before collecting actual user accounts.
+
+
+## Month and year history
+
+- The dashboard always opens on the real current month.
+- Previous months can be browsed with the arrows or **All months**.
+- The archive works across years and automatically extends as calendar years pass.
+- Historical months remain read-only; only the real current day can receive new interactions.
+- If the page stays open overnight, highlife checks the date automatically and advances the active day/month without requiring a refresh.

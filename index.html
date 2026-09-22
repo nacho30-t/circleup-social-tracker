@@ -84,9 +84,15 @@
       <div class="dashboard-grid">
         <section class="tracker-card">
           <div class="section-heading">
-            <div>
+            <div class="month-heading-block">
               <div class="eyebrow">YOUR MONTH</div>
               <h2 id="monthTitle">September 2026</h2>
+              <div class="month-navigation" aria-label="Browse months">
+                <button id="prevMonthBtn" class="month-nav-btn" type="button" aria-label="Previous month">←</button>
+                <button id="todayMonthBtn" class="month-nav-label" type="button">Current month</button>
+                <button id="nextMonthBtn" class="month-nav-btn" type="button" aria-label="Next month">→</button>
+                <button id="archiveBtn" class="archive-btn" type="button">All months</button>
+              </div>
             </div>
             <div class="legend" aria-label="Interaction categories">
               <span><i class="legend-stroke social"></i>Social</span>
@@ -102,8 +108,8 @@
             <div id="dayRing" class="day-ring"></div>
 
             <div class="tracker-center">
-              <span class="center-label">TODAY</span>
-              <div class="today-count"><strong id="todayCount">0</strong><span>/4</span></div>
+              <span id="centerLabel" class="center-label">TODAY</span>
+              <div class="today-count"><strong id="todayCount">0</strong><span id="centerCountSuffix">/4</span></div>
               <span id="monthInteractionLabel">0 interactions this month</span>
               <button id="checkInBtn" class="checkin-btn" type="button">Add interaction</button>
             </div>
@@ -119,7 +125,7 @@
 
         <aside class="side-column">
           <section class="stats-card">
-            <div class="eyebrow">MONTHLY SNAPSHOT</div>
+            <div id="snapshotEyebrow" class="eyebrow">MONTHLY SNAPSHOT</div>
             <div class="stats-grid three">
               <div class="stat featured-stat">
                 <strong id="statInteractions">0</strong>
@@ -136,7 +142,7 @@
             </div>
             <div class="mini-metrics">
               <div><span>Social days</span><strong id="statSocialDays">0</strong></div>
-              <div><span>Current streak</span><strong id="statStreak">0 days</strong></div>
+              <div><span id="statStreakLabel">Current streak</span><strong id="statStreak">0 days</strong></div>
             </div>
           </section>
 
@@ -144,7 +150,7 @@
             <div class="section-heading compact">
               <div>
                 <div class="eyebrow">RECENT ACTIVITY</div>
-                <h3>Your latest interactions</h3>
+                <h3 id="recentTitle">Your latest interactions</h3>
               </div>
             </div>
             <div id="recentList" class="recent-list"></div>
@@ -214,6 +220,29 @@
 
         <button id="saveInteractionBtn" class="primary-btn" type="submit">Highlight interaction</button>
       </form>
+    </div>
+  </div>
+
+
+  <div id="archiveModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="archiveTitle">
+    <div class="modal-backdrop" data-close-archive></div>
+    <div class="modal-card archive-modal-card">
+      <button class="modal-close" type="button" aria-label="Close" data-close-archive>×</button>
+      <div class="eyebrow">YOUR HISTORY</div>
+      <div class="archive-heading">
+        <div>
+          <h2 id="archiveTitle">All months</h2>
+          <p class="modal-subtitle">Jump back to any month. Past highlights stay exactly where you logged them.</p>
+        </div>
+        <button id="archiveCurrentBtn" class="archive-current-btn" type="button">Go to current month</button>
+      </div>
+      <div class="archive-year-nav">
+        <button id="prevYearBtn" class="month-nav-btn" type="button" aria-label="Previous year">←</button>
+        <strong id="archiveYearTitle">2026</strong>
+        <button id="nextYearBtn" class="month-nav-btn" type="button" aria-label="Next year">→</button>
+      </div>
+      <div id="archiveMonths" class="archive-months"></div>
+      <p class="archive-note">highlife automatically opens on the real current month whenever you come back. When the date changes, the active day moves with it.</p>
     </div>
   </div>
 
