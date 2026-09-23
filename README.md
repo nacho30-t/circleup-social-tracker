@@ -107,3 +107,9 @@ The database uses Supabase Row Level Security (RLS).
 ## Important
 
 Run `supabase_schema.sql` before publishing this version. Until `config.js` is filled in, the login screen will clearly show that the database is not connected.
+
+## Login/register fix
+
+The authentication page now defaults to **Log in** and has two ways to switch:
+- the tabs at the top;
+- an explicit `Already have an account? Log in` / `New to Highlife? Create account` link below the form.

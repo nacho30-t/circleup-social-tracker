@@ -102,27 +102,53 @@ function showConfigState(){
 
 function setAuthMode(mode){
   if(state.passwordRecovery) return;
+
   state.authMode=mode;
   $("authTabs").classList.remove("hidden");
+  $("authModeSwitch").classList.remove("hidden");
   oauthArea.classList.remove("hidden");
   $("email").classList.remove("hidden");
+
   const emailLabel=document.querySelector('label[for="email"]');
   if(emailLabel) emailLabel.classList.remove("hidden");
+
   $("password").placeholder="At least 6 characters";
-  authTabs.forEach(t=>t.classList.toggle("active",t.dataset.tab===mode));
+
+  authTabs.forEach(t=>{
+    const active=t.dataset.tab===mode;
+    t.classList.toggle("active",active);
+    t.setAttribute("aria-selected",active ? "true" : "false");
+  });
+
   const register=mode==="register";
   displayNameWrap.classList.toggle("hidden",!register);
   discoverableWrap.classList.toggle("hidden",!register);
   forgotPasswordBtn.classList.toggle("hidden",register);
+
   $("authHeading").textContent=register?"Create your account":"Welcome back";
   $("authSubheading").textContent=register
     ?"Your circle will be stored securely and follow you across devices."
-    :"Continue building the circle you started.";
+    :"Log in with the email and password you used to create Highlife.";
+
   authSubmit.textContent=register?"Create my Highlife":"Log in";
   $("password").autocomplete=register?"new-password":"current-password";
+
+  $("authModePrompt").textContent=register?"Already have an account?":"New to Highlife?";
+  $("authModeSwitchBtn").textContent=register?"Log in":"Create account";
+
   setMessage(authMessage,"");
 }
-authTabs.forEach(t=>t.addEventListener("click",()=>setAuthMode(t.dataset.tab)));
+
+authTabs.forEach(t=>{
+  t.addEventListener("click",()=>{
+    if(!state.passwordRecovery) setAuthMode(t.dataset.tab);
+  });
+});
+
+$("authModeSwitchBtn").addEventListener("click",()=>{
+  if(state.passwordRecovery) return;
+  setAuthMode(state.authMode==="register" ? "login" : "register");
+});
 
 $("togglePasswordBtn").addEventListener("click",()=>{
   const p=$("password");
@@ -205,6 +231,7 @@ forgotPasswordBtn.addEventListener("click",async()=>{
 function enterPasswordRecovery(){
   state.passwordRecovery=true;
   $("authTabs").classList.add("hidden");
+  $("authModeSwitch").classList.add("hidden");
   displayNameWrap.classList.add("hidden");
   discoverableWrap.classList.add("hidden");
   forgotPasswordBtn.classList.add("hidden");
@@ -803,7 +830,7 @@ document.addEventListener("keydown",e=>{
 
 async function init(){
   showConfigState();
-  setAuthMode("register");
+  setAuthMode("login");
   if(!db) return;
 
   db.auth.onAuthStateChange(async(event,session)=>{

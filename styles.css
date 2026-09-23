@@ -931,3 +931,23 @@ input:focus, textarea:focus { border-color: #8bbfaf; outline: 0; box-shadow: 0 0
   .request-actions button { flex:1; }
   .privacy-panel { align-items:flex-start; }
 }
+
+/* Login/register switch */
+.auth-mode-switch{
+  margin-top:14px;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:6px;
+  color:var(--muted);
+  font-size:.74rem;
+}
+.auth-mode-switch button{
+  border:0;
+  background:transparent;
+  color:var(--green);
+  font-weight:800;
+  padding:2px 3px;
+}
+.auth-mode-switch button:hover{text-decoration:underline;}
+.auth-tab{cursor:pointer;}
