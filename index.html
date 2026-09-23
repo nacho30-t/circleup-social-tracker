@@ -11,43 +11,112 @@
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <div id="authView" class="auth-view">
-    <div class="auth-shell">
-      <div class="auth-copy">
-        <a class="auth-brand" href="#" aria-label="Highlife home">
+  <div id="authView" class="auth-view auth-view-v3">
+    <div class="auth-ambient auth-ambient-a"></div>
+    <div class="auth-ambient auth-ambient-b"></div>
+
+    <div class="auth-shell auth-shell-v3">
+      <section class="auth-story">
+        <a class="auth-brand auth-brand-v3" href="#" aria-label="Highlife home">
           <span class="brand-marker"></span>
           <span>Highlife</span>
         </a>
-        <div class="auth-kicker">SOCIAL GROWTH, MADE VISIBLE</div>
-        <h1>Highlight the people and moments that grow your world.</h1>
-        <p>
-          Build social habits, follow the circles of people you care about and watch your wider network
-          grow into a living social iceberg.
-        </p>
-        <div class="auth-points">
-          <div><span class="mini-highlight social"></span><b>Track</b><small>Up to four meaningful interactions every day.</small></div>
-          <div><span class="mini-highlight professional"></span><b>Connect</b><small>Add friends by email and follow how their circles develop.</small></div>
-          <div><span class="mini-highlight new-person"></span><b>Discover</b><small>See direct and second-degree connections in your iceberg.</small></div>
-        </div>
-      </div>
 
-      <div class="auth-card">
-        <div class="auth-tabs">
-          <button class="auth-tab active" data-tab="register" type="button">Register</button>
+        <div class="auth-story-copy">
+          <div class="auth-kicker">YOUR SOCIAL LIFE, HIGHLIGHTED</div>
+          <h1>Build the circle you want to live in.</h1>
+          <p>
+            Track meaningful interactions, connect with real Highlife friends and watch your wider network
+            grow naturally over time.
+          </p>
+
+          <div class="auth-proof-pill">
+            <span class="proof-dot"></span>
+            <span><b>Real accounts. Real circles.</b> No generated friend data.</span>
+          </div>
+        </div>
+
+        <div class="auth-visual" aria-hidden="true">
+          <div class="visual-orbit orbit-one"></div>
+          <div class="visual-orbit orbit-two"></div>
+          <div class="visual-center"><span class="brand-marker"></span><b>You</b></div>
+          <div class="visual-person p1"><span>AM</span><i class="stroke-social"></i></div>
+          <div class="visual-person p2"><span>LC</span><i class="stroke-professional"></i></div>
+          <div class="visual-person p3"><span>JR</span><i class="stroke-new"></i></div>
+          <div class="visual-person p4"><span>?</span><i class="stroke-private"></i></div>
+          <svg viewBox="0 0 520 320" class="visual-lines">
+            <path d="M260 160 C210 130, 175 92, 112 78" />
+            <path d="M260 160 C310 125, 350 90, 407 78" />
+            <path d="M260 160 C208 194, 172 228, 116 243" />
+            <path d="M407 78 C438 127, 442 181, 417 234" class="secondary" />
+          </svg>
+        </div>
+
+        <div class="auth-story-footer">
+          <span>Daily habits</span><i></i><span>Real friendships</span><i></i><span>Network discovery</span>
+        </div>
+      </section>
+
+      <section class="auth-card auth-card-v3">
+        <div id="configBanner" class="config-banner hidden">
+          <b>Database not connected yet.</b>
+          <span>Add your Supabase URL and publishable key to <code>config.js</code>.</span>
+        </div>
+
+        <div class="auth-card-heading">
+          <span class="eyebrow">WELCOME TO HIGHLIFE</span>
+          <h2 id="authHeading">Create your account</h2>
+          <p id="authSubheading">Start building a social history that follows you across devices.</p>
+        </div>
+
+        <div id="authTabs" class="auth-tabs auth-tabs-v3">
+          <button class="auth-tab active" data-tab="register" type="button">Create account</button>
           <button class="auth-tab" data-tab="login" type="button">Log in</button>
         </div>
+
         <form id="authForm">
+          <div id="displayNameWrap">
+            <label for="displayName">Name</label>
+            <input id="displayName" type="text" maxlength="60" autocomplete="name" placeholder="Your name" />
+          </div>
+
           <label for="email">Email</label>
           <input id="email" type="email" autocomplete="email" placeholder="you@gmail.com" required />
-          <label for="password">Password</label>
-          <input id="password" type="password" minlength="6" placeholder="At least 6 characters" required />
-          <button id="authSubmit" class="primary-btn" type="submit">Create account</button>
-          <p id="authMessage" class="form-message" aria-live="polite"></p>
+
+          <div class="password-label-row">
+            <label for="password">Password</label>
+            <button id="forgotPasswordBtn" class="inline-link hidden" type="button">Forgot password?</button>
+          </div>
+          <div class="password-field">
+            <input id="password" type="password" minlength="6" autocomplete="current-password" placeholder="At least 6 characters" required />
+            <button id="togglePasswordBtn" class="password-toggle" type="button" aria-label="Show password">Show</button>
+          </div>
+
+          <label id="discoverableWrap" class="privacy-optin">
+            <input id="discoverableOptIn" type="checkbox" />
+            <span>
+              <b>Network discovery</b>
+              <small>Let friends-of-friends see my name in their Iceberg. You can change this later.</small>
+            </span>
+          </label>
+
+          <button id="authSubmit" class="primary-btn auth-primary" type="submit">Create my Highlife</button>
+          <p id="authMessage" class="form-message auth-message" aria-live="polite"></p>
         </form>
-        <p class="prototype-note">
-          Prototype: accounts and social data are stored in this browser. Real multi-user sharing requires a backend.
-        </p>
-      </div>
+
+        <div id="oauthArea">
+          <div class="auth-divider"><span>or</span></div>
+          <button id="googleAuthBtn" class="google-btn" type="button">
+            <span class="google-mark">G</span>
+            Continue with Google
+          </button>
+        </div>
+
+        <div class="auth-trust">
+          <span class="trust-lock">⌁</span>
+          <p>Your circle is private by default. Friend data is shown only after a real Highlife friendship is accepted.</p>
+        </div>
+      </section>
     </div>
   </div>
 
@@ -192,33 +261,53 @@
           <div>
             <span class="eyebrow">FRIENDS</span>
             <h1>Your circle doesn't grow alone.</h1>
-            <p>Add people by email, follow their monthly circles and notice how your social worlds overlap.</p>
+            <p>Send requests to existing Highlife accounts. A friend's real circle appears only after they accept.</p>
           </div>
         </div>
 
         <div class="friends-layout">
           <section class="panel add-friend-panel">
             <div>
-              <span class="eyebrow">ADD A FRIEND</span>
-              <h2>Connect by Gmail or email</h2>
-              <p>Enter their email address. In this prototype, Highlife generates a demo shared circle so you can test the experience.</p>
+              <span class="eyebrow">SEND A REQUEST</span>
+              <h2>Find a Highlife user by email</h2>
+              <p>Highlife will never generate a person or invent their activity. If the email has no registered account, no friend is added.</p>
             </div>
             <form id="friendForm" class="friend-form">
               <div class="email-input-wrap">
                 <span>✉</span>
                 <input id="friendEmailInput" type="email" placeholder="friend@gmail.com" required />
               </div>
-              <button class="primary-btn compact" type="submit">Add friend</button>
+              <button class="primary-btn compact" type="submit">Send request</button>
             </form>
             <p id="friendMessage" class="friend-message" aria-live="polite"></p>
           </section>
 
+          <section id="friendRequestsPanel" class="panel requests-panel hidden">
+            <div class="panel-heading">
+              <div><span class="eyebrow">REQUESTS</span><h2>People who want to connect</h2></div>
+              <span id="requestCountBadge" class="request-count">0 pending</span>
+            </div>
+            <div id="incomingRequestsList" class="incoming-requests"></div>
+          </section>
+
           <section class="panel friends-panel">
             <div class="panel-heading">
-              <div><span class="eyebrow">YOUR PEOPLE</span><h2>Connected circles</h2></div>
+              <div><span class="eyebrow">YOUR PEOPLE</span><h2>Accepted circles</h2></div>
               <div class="friend-filter"><span id="connectedSummary">0 connected</span></div>
             </div>
             <div id="friendsGrid" class="friends-grid"></div>
+          </section>
+
+          <section class="panel privacy-panel">
+            <div>
+              <span class="eyebrow">NETWORK PRIVACY</span>
+              <h3>Friends-of-friends visibility</h3>
+              <p>When enabled, your display name can appear as a second-degree connection in other people's Icebergs. Your email and private notes are never shown there.</p>
+            </div>
+            <label class="switch">
+              <input id="discoverabilityToggle" type="checkbox" />
+              <span class="switch-track"><i></i></span>
+            </label>
           </section>
         </div>
       </section>
@@ -417,10 +506,12 @@
         <div id="friendMiniRing" class="friend-mini-ring"></div>
         <div class="friend-mini-center"><strong id="friendMiniTotal">0</strong><span>highlights</span></div>
       </div>
-      <p class="prototype-note centered">In this static prototype, friend activity is simulated from the email address. A real version would read the friend's consented account data from the backend.</p>
+      <p class="prototype-note centered">This circle is loaded from your accepted friend’s real Highlife interaction history. Notes remain private.</p>
     </div>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
