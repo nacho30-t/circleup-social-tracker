@@ -1051,3 +1051,25 @@ input:focus, textarea:focus { border-color: #8bbfaf; outline: 0; box-shadow: 0 0
   .today-interactions-heading small{text-align:left;}
   .recent-item.has-delete{grid-template-columns:38px minmax(0,1fr) auto 29px;}
 }
+
+
+/* More explicit correction control */
+.edit-today-btn{
+  margin-top:8px;
+  border:0;
+  background:transparent;
+  color:var(--green);
+  font-size:.69rem;
+  font-weight:800;
+  text-decoration:underline;
+  text-underline-offset:3px;
+  padding:4px 6px;
+}
+.edit-today-btn:hover{color:var(--green-dark);}
+.delete-interaction-btn{
+  width:auto !important;
+  min-width:58px;
+  padding:0 9px;
+  font-size:.67rem !important;
+  font-weight:800;
+}

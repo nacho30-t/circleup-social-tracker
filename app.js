@@ -393,6 +393,9 @@ async function renderCircle(){
       $("openCheckInHeader").disabled=false;
       $("checkInBtn").innerHTML=full?"<span></span>Manage today":"<span></span>Add interaction";
       $("openCheckInHeader").textContent=full?"Manage today's interactions":"+ Add interaction";
+
+      // Make correction/deletion impossible to miss whenever today has data.
+      $("editTodayBtn").classList.toggle("hidden", todayRows.length===0);
     }else{
       $("centerKicker").textContent="MONTH TOTAL";
       $("todayCount").textContent=rows.length;
@@ -400,6 +403,7 @@ async function renderCircle(){
       $("monthInteractionLabel").textContent=`${Object.keys(grouped).length} social day${Object.keys(grouped).length===1?"":"s"}`;
       $("checkInBtn").classList.add("hidden");
       $("openCheckInHeader").classList.add("hidden");
+      $("editTodayBtn").classList.add("hidden");
     }
   }catch(err){ console.error(err); }
 }
@@ -433,7 +437,7 @@ function renderCircleRing(selected,grouped,now){
       slots.appendChild(slot);
     }
     item.appendChild(slots);
-    if(current && day===now.getDate() && entries.length<MAX_INTERACTIONS_PER_DAY) item.addEventListener("click",openCheckIn);
+    if(current && day===now.getDate()) item.addEventListener("click",openCheckIn);
     ring.appendChild(item);
   }
   state.animateDateKey=null;state.animateSlotIndex=null;
@@ -486,7 +490,7 @@ function renderRecent(selected,rows){
       <div class="recent-icon" style="--item-color:${CATEGORY_COLORS[e.category]}">${CATEGORY_SHORT[e.category]}</div>
       <div class="recent-copy"><b>${CATEGORY_LABELS[e.category]}</b><span>${escapeHTML(e.note||"Meaningful interaction")}</span></div>
       <div class="recent-date">${d.toLocaleDateString("en-GB",{day:"numeric",month:"short"})}</div>
-      ${canDelete?'<button class="recent-delete-btn" type="button" title="Delete this interaction" aria-label="Delete this interaction">×</button>':""}`;
+      ${canDelete?'<button class="recent-delete-btn" type="button" title="Delete this interaction" aria-label="Delete this interaction">⌫</button>':""}`;
 
     if(canDelete){
       row.querySelector(".recent-delete-btn").addEventListener("click",()=>{
@@ -504,6 +508,7 @@ $("currentMonthBtn").addEventListener("click",()=>{state.selectedMonth=currentMo
 const checkInModal=$("checkInModal");
 $("checkInBtn").addEventListener("click",openCheckIn);
 $("openCheckInHeader").addEventListener("click",openCheckIn);
+$("editTodayBtn").addEventListener("click",openCheckIn);
 async function openCheckIn(){
   if(!isSameMonth(state.selectedMonth,new Date())) return;
 
@@ -562,7 +567,7 @@ function renderTodayInteractions(entries){
         <b>${CATEGORY_LABELS[entry.category]||"Social"}</b>
         <span>${escapeHTML(entry.note||"No note added")}</span>
       </div>
-      <button class="delete-interaction-btn" type="button" title="Remove interaction" aria-label="Remove interaction">×</button>`;
+      <button class="delete-interaction-btn" type="button" title="Remove interaction" aria-label="Remove interaction">Delete</button>`;
 
     const btn=row.querySelector(".delete-interaction-btn");
     btn.addEventListener("click",()=>deleteTodayInteraction(entry.id,entry,btn));
