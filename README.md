@@ -113,3 +113,18 @@ Run `supabase_schema.sql` before publishing this version. Until `config.js` is f
 The authentication page now defaults to **Log in** and has two ways to switch:
 - the tabs at the top;
 - an explicit `Already have an account? Log in` / `New to Highlife? Create account` link below the form.
+
+
+## Correcting an interaction added by mistake
+
+Users can now delete an interaction they added **today**:
+
+- Open the current day / **Manage today**.
+- Highlife lists today's highlights inside the check-in modal.
+- Press `×` next to the mistaken interaction.
+- Confirm the deletion.
+- The circular tracker, statistics and recent activity update immediately.
+- Today's items in **Recent activity** also show a small delete button.
+- If all four daily slots are full, Highlife still lets the user open **Manage today**, remove a mistake and add the correct interaction.
+
+This uses the existing Supabase delete policy, so no new SQL migration is required.

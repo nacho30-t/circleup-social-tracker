@@ -387,8 +387,12 @@ async function renderCircle(){
       $("checkInBtn").classList.remove("hidden");
       $("openCheckInHeader").classList.remove("hidden");
       const full=todayRows.length>=MAX_INTERACTIONS_PER_DAY;
-      $("checkInBtn").disabled=full;$("openCheckInHeader").disabled=full;
-      $("checkInBtn").innerHTML=full?"<span></span>Today's slots are full":"<span></span>Add interaction";
+
+      // Keep the manager accessible even when all four slots are full.
+      $("checkInBtn").disabled=false;
+      $("openCheckInHeader").disabled=false;
+      $("checkInBtn").innerHTML=full?"<span></span>Manage today":"<span></span>Add interaction";
+      $("openCheckInHeader").textContent=full?"Manage today's interactions":"+ Add interaction";
     }else{
       $("centerKicker").textContent="MONTH TOTAL";
       $("todayCount").textContent=rows.length;
@@ -461,16 +465,34 @@ function renderCircleStats(selected,rows,grouped,now){
 
 function renderRecent(selected,rows){
   const list=$("recentList");list.innerHTML="";
-  $("recentTitle").textContent=isSameMonth(selected,new Date())?"Latest interactions":`From ${selected.toLocaleDateString("en-GB",{month:"long"})}`;
+  const now=new Date();
+  const todayKey=keyForDate(now);
+
+  $("recentTitle").textContent=isSameMonth(selected,now)?"Latest interactions":`From ${selected.toLocaleDateString("en-GB",{month:"long"})}`;
   const sorted=[...rows].sort((a,b)=>String(b.created_at).localeCompare(String(a.created_at))).slice(0,6);
-  if(!sorted.length){ list.innerHTML='<div class="recent-empty">No interactions recorded in this month yet.</div>';return; }
+
+  if(!sorted.length){
+    list.innerHTML='<div class="recent-empty">No interactions recorded in this month yet.</div>';
+    return;
+  }
+
   sorted.forEach(e=>{
-    const row=document.createElement("div");row.className="recent-item";
+    const row=document.createElement("div");
+    const canDelete=isSameMonth(selected,now) && e.interaction_date===todayKey;
+    row.className=`recent-item${canDelete?" has-delete":""}`;
     const d=new Date(`${e.interaction_date}T12:00:00`);
+
     row.innerHTML=`
       <div class="recent-icon" style="--item-color:${CATEGORY_COLORS[e.category]}">${CATEGORY_SHORT[e.category]}</div>
       <div class="recent-copy"><b>${CATEGORY_LABELS[e.category]}</b><span>${escapeHTML(e.note||"Meaningful interaction")}</span></div>
-      <div class="recent-date">${d.toLocaleDateString("en-GB",{day:"numeric",month:"short"})}</div>`;
+      <div class="recent-date">${d.toLocaleDateString("en-GB",{day:"numeric",month:"short"})}</div>
+      ${canDelete?'<button class="recent-delete-btn" type="button" title="Delete this interaction" aria-label="Delete this interaction">×</button>':""}`;
+
+    if(canDelete){
+      row.querySelector(".recent-delete-btn").addEventListener("click",()=>{
+        deleteTodayInteraction(e.id,e);
+      });
+    }
     list.appendChild(row);
   });
 }
@@ -484,23 +506,129 @@ $("checkInBtn").addEventListener("click",openCheckIn);
 $("openCheckInHeader").addEventListener("click",openCheckIn);
 async function openCheckIn(){
   if(!isSameMonth(state.selectedMonth,new Date())) return;
+
   const rows=await loadOwnMonth(currentMonthDate());
   const todayRows=rows.filter(x=>x.interaction_date===keyForDate(new Date()));
-  if(todayRows.length>=MAX_INTERACTIONS_PER_DAY) return;
+
   renderCapacity(todayRows);
-  checkInModal.classList.remove("hidden");document.body.style.overflow="hidden";
+  renderTodayInteractions(todayRows);
+  updateCheckInFormAvailability(todayRows);
+
+  checkInModal.classList.remove("hidden");
+  document.body.style.overflow="hidden";
 }
-function closeCheckIn(){checkInModal.classList.add("hidden");document.body.style.overflow="";$("checkInForm").reset();$("charCount").textContent="0";}
+
+function closeCheckIn(){
+  checkInModal.classList.add("hidden");
+  document.body.style.overflow="";
+  $("checkInForm").reset();
+  $("charCount").textContent="0";
+}
+
 document.querySelectorAll("[data-close-checkin]").forEach(x=>x.addEventListener("click",closeCheckIn));
 $("interactionNote").addEventListener("input",e=>$("charCount").textContent=e.target.value.length);
+
 function renderCapacity(entries){
   const box=$("todayCapacity");
   box.innerHTML=`<span class="capacity-label">${entries.length}/${MAX_INTERACTIONS_PER_DAY} interactions today</span><div class="capacity-lines"></div>`;
   const lines=box.querySelector(".capacity-lines");
+
   for(let i=0;i<MAX_INTERACTIONS_PER_DAY;i++){
-    const s=document.createElement("span");s.className="capacity-line";
+    const s=document.createElement("span");
+    s.className="capacity-line";
     if(entries[i]) s.classList.add("filled",`category-${entries[i].category}`);
     lines.appendChild(s);
+  }
+}
+
+function renderTodayInteractions(entries){
+  const section=$("todayInteractionsSection");
+  const list=$("todayInteractionsList");
+  list.innerHTML="";
+
+  if(!entries.length){
+    section.classList.add("hidden");
+    return;
+  }
+
+  section.classList.remove("hidden");
+  entries.forEach(entry=>{
+    const row=document.createElement("div");
+    row.className="today-interaction-row";
+    row.style.setProperty("--interaction-color",CATEGORY_COLORS[entry.category]||CATEGORY_COLORS.social);
+    row.innerHTML=`
+      <span class="today-interaction-stroke"></span>
+      <div class="today-interaction-copy">
+        <b>${CATEGORY_LABELS[entry.category]||"Social"}</b>
+        <span>${escapeHTML(entry.note||"No note added")}</span>
+      </div>
+      <button class="delete-interaction-btn" type="button" title="Remove interaction" aria-label="Remove interaction">×</button>`;
+
+    const btn=row.querySelector(".delete-interaction-btn");
+    btn.addEventListener("click",()=>deleteTodayInteraction(entry.id,entry,btn));
+    list.appendChild(row);
+  });
+}
+
+function updateCheckInFormAvailability(entries){
+  const form=$("checkInForm");
+  const previous=form.previousElementSibling;
+
+  if(previous?.classList?.contains("manage-note")){
+    previous.remove();
+  }
+
+  const full=entries.length>=MAX_INTERACTIONS_PER_DAY;
+  form.classList.toggle("checkin-form-disabled",full);
+  form.querySelectorAll("input,textarea,button").forEach(el=>{
+    el.disabled=full;
+  });
+
+  if(full){
+    const message=document.createElement("p");
+    message.className="manage-note";
+    message.textContent="All four slots are full. Remove one of today's highlights above if you want to replace it.";
+    form.parentNode.insertBefore(message,form);
+  }
+}
+
+async function deleteTodayInteraction(interactionId,interaction,button=null){
+  if(!interactionId) return;
+
+  const todayKey=keyForDate(new Date());
+  if(interaction?.interaction_date && interaction.interaction_date!==todayKey){
+    alert("Only today's interactions can be removed from this screen.");
+    return;
+  }
+
+  const label=CATEGORY_LABELS[interaction?.category]||"interaction";
+  if(!confirm(`Delete this ${label.toLowerCase()} interaction from today?`)) return;
+
+  if(button) button.disabled=true;
+
+  try{
+    const {error}=await db.from("interactions")
+      .delete()
+      .eq("id",interactionId)
+      .eq("user_id",state.user.id)
+      .eq("interaction_date",todayKey);
+
+    if(error) throw error;
+
+    state.monthCache.delete(monthKey(currentMonthDate()));
+    const rows=await loadOwnMonth(currentMonthDate(),true);
+    const todayRows=rows.filter(x=>x.interaction_date===todayKey);
+
+    await renderCircle();
+
+    if(!checkInModal.classList.contains("hidden")){
+      renderCapacity(todayRows);
+      renderTodayInteractions(todayRows);
+      updateCheckInFormAvailability(todayRows);
+    }
+  }catch(err){
+    alert(err.message||"Could not delete this interaction.");
+    if(button) button.disabled=false;
   }
 }
 $("checkInForm").addEventListener("submit",async e=>{
